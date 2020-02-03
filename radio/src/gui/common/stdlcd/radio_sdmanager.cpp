@@ -168,7 +168,7 @@ void onSdManagerMenu(const char * result)
     audioQueue.stopAll();
     audioQueue.playFile(lfn, 0, ID_PLAY_FROM_SD_MANAGER);
   }
-#if LCD_DEPTH > 1
+#if LCD_DEPTH > 1 && !defined(PCBTANGO)
   else if (result == STR_ASSIGN_BITMAP) {
     strAppendFilename(g_model.header.bitmap, line, sizeof(g_model.header.bitmap));
     memcpy(modelHeaders[g_eeGeneral.currModel].bitmap, g_model.header.bitmap, sizeof(g_model.header.bitmap));
@@ -240,7 +240,7 @@ void onUpdateReceiverSelection(const char * result)
 
 void menuRadioSdManager(event_t _event)
 {
-#if LCD_DEPTH > 1
+#if LCD_DEPTH > 1 && !defined(PCBTANGO)
   int lastPos = menuVerticalPosition;
 #endif
 
@@ -258,7 +258,7 @@ void menuRadioSdManager(event_t _event)
     case EVT_ENTRY:
       f_chdir(ROOT_PATH);
       REFRESH_FILES();
-#if LCD_DEPTH > 1
+#if LCD_DEPTH > 1 && !defined(PCBTANGO)
       lastPos = -1;
 #endif
       break;
@@ -282,7 +282,7 @@ void menuRadioSdManager(event_t _event)
       REFRESH_FILES();
       break;
 
-#if !defined(PCBTARANIS)
+#if !defined(PCBTARANIS) && !defined(PCBTANGO)
     case EVT_KEY_FIRST(KEY_RIGHT):
 #endif
     case EVT_KEY_BREAK(KEY_ENTER):
@@ -303,7 +303,7 @@ void menuRadioSdManager(event_t _event)
       break;
 
     case EVT_KEY_LONG(KEY_ENTER):
-#if !defined(PCBX9) && !defined(PCBX7) && !defined(PCBX3)// TODO NO_HEADER_LINE
+#if !defined(PCBX9) && !defined(PCBX7) && !defined(PCBX3) && !defined(PCBTANGO)// TODO NO_HEADER_LINE
       if (menuVerticalPosition < HEADER_LINE) {
         killEvents(_event);
         POPUP_MENU_ADD_ITEM(STR_SD_INFO);
@@ -324,7 +324,7 @@ void menuRadioSdManager(event_t _event)
           if (!strcasecmp(ext, SOUNDS_EXT)) {
             POPUP_MENU_ADD_ITEM(STR_PLAY_FILE);
           }
-#if LCD_DEPTH > 1
+#if LCD_DEPTH > 1 && !defined(PCBTANGO)
           else if (isExtensionMatching(ext, BITMAPS_EXT)) {
             if (!READ_ONLY() && (ext-line) <= (int)sizeof(g_model.header.bitmap)) {
               POPUP_MENU_ADD_ITEM(STR_ASSIGN_BITMAP);
@@ -514,7 +514,7 @@ void menuRadioSdManager(event_t _event)
     }
 #endif
 
-#if LCD_DEPTH > 1
+#if LCD_DEPTH > 1 && !defined(PCBTANGO)
     const char * ext = getFileExtension(reusableBuffer.sdManager.lines[index]);
     if (ext && isExtensionMatching(ext, BITMAPS_EXT)) {
       if (lastPos != menuVerticalPosition) {

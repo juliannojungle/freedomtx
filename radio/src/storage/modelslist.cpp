@@ -24,7 +24,11 @@ using std::list;
 ModelsList modelslist;
 
 ModelCell::ModelCell(const char * name)
+#if !defined(PCBTANGO)
   : buffer(NULL), valid_rfData(false)
+#else
+  : valid_rfData(false)
+#endif
 {
   strncpy(modelFilename, name, sizeof(modelFilename));
   memset(modelName, 0, sizeof(modelName));
@@ -54,6 +58,7 @@ void ModelCell::setModelId(uint8_t moduleIdx, uint8_t id)
   modelId[moduleIdx] = id;
 }
 
+#if !defined(PCBTANGO)
 void ModelCell::resetBuffer()
 {
   if (buffer) {
@@ -125,6 +130,12 @@ void ModelCell::loadBitmap()
   }
   buffer->drawSolidHorizontalLine(5, 19, 143, LINE_COLOR);
 }
+#else
+void ModelCell::resetBuffer()
+{
+  return;
+}
+#endif
 
 void ModelCell::save(FIL* file)
 {

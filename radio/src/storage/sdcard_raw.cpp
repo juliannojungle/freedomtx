@@ -21,6 +21,10 @@
 #include "opentx.h"
 #include "modelslist.h"
 
+#if defined(EEPROM_SDCARD)
+ModelHeader modelHeaders[MAX_MODELS];
+#endif
+
 void getModelPath(char * path, const char * filename)
 {
   strcpy(path, STR_MODELS_PATH);
@@ -156,6 +160,10 @@ const char * loadRadioSettingsSettings()
     TRACE("loadRadioSettingsSettings error=%s", error);
   }
 
+#if defined(PCBTANGO)
+  loadTangoRadioSettingsSettings();
+#endif
+
   return error;
 }
 
@@ -207,10 +215,12 @@ void storageReadAll()
 
   // Wipe models list in case
   // it's being reloaded after USB connection
+#if !defined(PCBTANGO)
   modelslist.clear();
 
   // and reload the list
   modelslist.load();
+#endif
 }
 
 void storageCreateModelsList()

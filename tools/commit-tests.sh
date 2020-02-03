@@ -177,6 +177,15 @@ if [[ " X12S HORUS ALL " =~ " ${FLAVOR} " ]] ; then
   make -j${CORES} gtests ; ./gtests ${TEST_OPTIONS}
 fi
 
+if [[ " TANGO ALL " =~ " ${FLAVOR} " ]] ; then
+  # OpenTX on Tango
+  rm -rf *
+  cmake ${COMMON_OPTIONS} -DPCB=TANGO -DHELI=YES -DLUA=YES -DGVARS=YES -DCROSSFIRE=ON ${SRCDIR}
+  make -j${CORES} ${FIRMARE_TARGET}
+  make -j${CORES} libsimulator
+  #make -j${CORES} gtests ; ./gtests ${TEST_OPTIONS}
+fi
+
 if [[ " DEFAULT ALL " =~ " ${FLAVOR} " ]] ; then
   # Companion
   rm -rf *

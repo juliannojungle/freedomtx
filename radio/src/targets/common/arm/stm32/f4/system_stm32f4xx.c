@@ -152,8 +152,13 @@
 
 /************************* PLL Parameters *************************************/
 /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
-#define PLL_M      12
-#define PLL_N      336
+#if defined(PCBTANGO)
+  #define PLL_M      4
+  #define PLL_N      168
+#else
+  #define PLL_M      12
+  #define PLL_N      336
+#endif
 
 /* SYSCLK = PLL_VCO / PLL_P */
 #define PLL_P      2

@@ -293,7 +293,13 @@ void memswap(void * a, void * b, uint8_t size);
   #define pwrOffPressed()              (!pwrPressed())
 #endif
 
-#define PWR_PRESS_SHUTDOWN_DELAY       300 // 3s
+#if defined(PCBTANGO)
+  #define PWR_PRESS_SHUTDOWN_DELAY       100 // 1s
+  #define PWR_PRESS_SHUTDOWN_THRESHOD    300 // 3s
+#else
+  #define PWR_PRESS_SHUTDOWN_DELAY       300 // 3s
+  #define PWR_PRESS_SHUTDOWN_THRESHOD    0   // 0s
+#endif
 
 #define GET_LOWRES_POT_POSITION(i)     (getValue(MIXSRC_FIRST_POT+(i)) >> 4)
 #define SAVE_POT_POSITION(i)           g_model.potsWarnPosition[i] = GET_LOWRES_POT_POSITION(i)
@@ -370,7 +376,7 @@ extern uint8_t channel_order(uint8_t x);
 
 #if defined(COLORLCD)
   #define SPLASH_NEEDED()              (false)
-#elif defined(PCBTARANIS)
+#elif defined(PCBTARANIS) || defined(PCBTANGO)
   #define SPLASH_NEEDED()              (g_eeGeneral.splashMode != 3)
 #else
   #define SPLASH_NEEDED()              (g_model.moduleData[EXTERNAL_MODULE].type != MODULE_TYPE_DSM2 && !g_eeGeneral.splashMode)
@@ -378,7 +384,7 @@ extern uint8_t channel_order(uint8_t x);
 
 #if defined(PCBHORUS)
   #define SPLASH_TIMEOUT               0 /* we use the splash duration to load stuff from the SD */
-#elif defined(PCBTARANIS)
+#elif defined(PCBTARANIS) || defined(PCBTANGO)
   #define SPLASH_TIMEOUT               (g_eeGeneral.splashMode==-4 ? 1500 : (g_eeGeneral.splashMode<=0 ? (400-g_eeGeneral.splashMode*200) : (400-g_eeGeneral.splashMode*100)))
 #else
   #define SPLASH_TIMEOUT               (4*100)  // 4 seconds
@@ -398,7 +404,7 @@ extern uint8_t channel_order(uint8_t x);
 
 #define HEART_TIMER_10MS               1
 #define HEART_TIMER_PULSES             2 // when multiple modules this is the first one
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
 #define HEART_WDT_CHECK                (HEART_TIMER_10MS + (HEART_TIMER_PULSES << 0) + (HEART_TIMER_PULSES << 1))
 #else
 #define HEART_WDT_CHECK                (HEART_TIMER_10MS + HEART_TIMER_PULSES)
@@ -440,7 +446,7 @@ bool cmpStrWithZchar(const char * charString, const char * zcharString, int size
 #include "keys.h"
 #include "pwr.h"
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
 div_t switchInfo(int switchPosition);
 extern uint8_t potsPos[NUM_XPOTS];
 #endif
@@ -457,6 +463,9 @@ uint16_t evalChkSum();
 #if !defined(GUI)
   #define RAISE_ALERT(...)
   #define ALERT(...)
+#elif defined(PCBTANGO)
+  #define RAISE_ALERT(title, msg, info, sound) do{ if(getBoardOffState()){ return; }else{ showAlertBox(title, msg, info, sound); }}while(0)
+  #define ALERT(title, msg, sound) alert(title, msg, sound)
 #else
   #define RAISE_ALERT(title, msg, info, sound) showAlertBox(title, msg, info, sound)
   #define ALERT(title, msg, sound) alert(title, msg, sound)
@@ -507,7 +516,7 @@ void evalLogicalSwitches(bool isCurrentFlightmode=true);
 void logicalSwitchesCopyState(uint8_t src, uint8_t dst);
 #define LS_RECURSIVE_EVALUATION_RESET()
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
   void getSwitchesPosition(bool startup);
 #else
   #define getSwitchesPosition(...)
@@ -542,7 +551,7 @@ bool setTrimValue(uint8_t phase, uint8_t idx, int trim);
 
 #if defined(PCBSKY9X)
   #define ROTARY_ENCODER_GRANULARITY (2 << g_eeGeneral.rotarySteps)
-#elif defined(PCBHORUS)
+#elif defined(PCBHORUS) || defined(PCBTANGO)
   #define ROTARY_ENCODER_GRANULARITY (1)
 #else
   #define ROTARY_ENCODER_GRANULARITY (2)
@@ -990,6 +999,13 @@ enum AUDIO_SOUNDS {
   AU_STICK2_MIDDLE,
   AU_STICK3_MIDDLE,
   AU_STICK4_MIDDLE,
+#if defined(PCBTANGO)
+  AU_AILERON_TRIM,
+  AU_ELEVATOR_TRIM,
+  AU_THROTTLE_TRIM,
+  AU_RUDDER_TRIME,
+  AU_MAIN_MENU,
+#endif
 #if defined(PCBTARANIS) || defined(PCBHORUS)
   AU_POT1_MIDDLE,
   AU_POT2_MIDDLE,
@@ -1294,6 +1310,8 @@ void varioWakeup();
 
 #if defined(PCBTARANIS)
   extern const unsigned char logo_taranis[];
+#elif defined(PCBTANGO)
+  extern const unsigned char logo_tango[];
 #endif
 
 #if defined(STM32)
@@ -1374,5 +1392,9 @@ inline bool isSimu()
   return false;
 #endif
 }
+
+#if defined(CROSSFIRE)
+#include "./io/crsf/crossfire.h"
+#endif
 
 #endif // _OPENTX_H_

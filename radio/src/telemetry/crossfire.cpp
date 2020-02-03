@@ -121,7 +121,7 @@ void processCrossfireTelemetryFrame()
       for (unsigned int i=0; i<=TX_SNR_INDEX; i++) {
         if (getCrossfireTelemetryValue<1>(3+i, value)) {
           if (i == TX_POWER_INDEX) {
-            static const int32_t power_values[] = { 0, 10, 25, 100, 500, 1000, 2000 };
+            static const int32_t power_values[] = { 0, 10, 25, 100, 500, 1000, 2000, 250 };
             value = ((unsigned)value < DIM(power_values) ? power_values[value] : 0);
           }
           processCrossfireTelemetryValue(i, value);
@@ -174,9 +174,16 @@ void processCrossfireTelemetryFrame()
   }
 }
 
+#if defined(PCBTANGO)
+bool isCrossfireOutputBufferAvailable()
+{
+  return outputTelemetryBufferSize == 0;
+}
+#endif
+
 void processCrossfireTelemetryData(uint8_t data)
 {
-  if (telemetryRxBufferCount == 0 && data != RADIO_ADDRESS) {
+  if (telemetryRxBufferCount == 0 && ( data != RADIO_ADDRESS && data != CRSF_SYNC_BYTE )) {
     TRACE("[XF] address 0x%02X error", data);
     return;
   }

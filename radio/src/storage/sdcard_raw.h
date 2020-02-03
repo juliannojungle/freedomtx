@@ -28,6 +28,9 @@
 
 // opens radio.bin or model file
 const char * openFile(const char * fullpath, FIL* file, uint16_t* size);
+#if defined(EEPROM_SDCARD)
+extern ModelHeader modelHeaders[MAX_MODELS];
+#endif
 
 void getModelPath(char * path, const char * filename);
 
@@ -37,7 +40,11 @@ const char * createModel();
 
 PACK(struct RamBackup {
   uint16_t size;
+#if defined(PCBTANGO)
+  uint8_t data[2044];
+#else
   uint8_t data[4094];
+#endif
 });
 
 extern RamBackup * ramBackup;

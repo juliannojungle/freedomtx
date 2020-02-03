@@ -290,7 +290,7 @@ PACK(struct FrSkyLineData {
   source_t sources[NUM_LINE_ITEMS];
 });
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
 PACK(struct TelemetryScriptData {
   char    file[LEN_SCRIPT_FILENAME];
   int16_t inputs[MAX_TELEM_SCRIPT_INPUTS];
@@ -300,7 +300,7 @@ PACK(struct TelemetryScriptData {
 union TelemetryScreenData {
   FrSkyBarData  bars[4];
   FrSkyLineData lines[4];
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
   TelemetryScriptData script;
 #endif
 };
@@ -507,6 +507,10 @@ typedef uint32_t swarnenable_t;
 typedef uint16_t swconfig_t;
 typedef uint16_t swarnstate_t;
 typedef uint8_t swarnenable_t;
+#elif defined(PCBTANGO)
+typedef uint16_t swconfig_t;
+typedef uint16_t swarnstate_t;
+typedef uint8_t swarnenable_t;
 #else
 typedef uint8_t swarnstate_t;
 typedef uint8_t swarnenable_t;
@@ -548,7 +552,7 @@ PACK(struct CustomScreenData {
   #define TOPBAR_DATA
 #endif
 
-#if defined(PCBHORUS) || defined(PCBTARANIS)
+#if defined(PCBHORUS) || defined(PCBTARANIS) || defined(PCBTANGO)
   #define SCRIPT_DATA \
     NOBACKUP(ScriptData scriptsData[MAX_SCRIPTS]);
 #else
@@ -689,6 +693,25 @@ PACK(struct TrainerData {
     char switchNames[NUM_SWITCHES][LEN_SWITCH_NAME]; \
     char anaNames[NUM_STICKS+NUM_POTS+NUM_SLIDERS][LEN_ANA_NAME]; \
     BLUETOOTH_FIELDS
+#elif defined(PCBTANGO)
+  #if defined(BLUETOOTH)
+    #define BLUETOOTH_FIELDS \
+      uint8_t spare; \
+      char bluetoothName[LEN_BLUETOOTH_NAME];
+  #else
+    #define BLUETOOTH_FIELDS
+  #endif
+  #define EXTRA_GENERAL_FIELDS \
+    uint8_t  serial2Mode:4; \
+    uint8_t  slidersConfig:4; \
+    uint8_t  potsConfig; /* two bits per pot */\
+    uint8_t  backlightColor; \
+    swarnstate_t switchUnlockStates; \
+    swconfig_t switchConfig; \
+    char switchNames[NUM_SWITCHES][LEN_SWITCH_NAME]; \
+    char anaNames[NUM_STICKS+NUM_POTS+NUM_SLIDERS][LEN_ANA_NAME]; \
+    NOBACKUP(char currModelFilename[LEN_MODEL_FILENAME+1]); \
+    BLUETOOTH_FIELDS
 #elif defined(PCBSKY9X)
   #define EXTRA_GENERAL_FIELDS \
     int8_t   txCurrentCalibration; \
@@ -729,7 +752,11 @@ PACK(struct RadioData {
   N_HORUS_FIELD(int8_t currModel);
   N_HORUS_FIELD(uint8_t contrast);
   NOBACKUP(uint8_t vBatWarn);
+#if !defined(PCBTANGO)
   NOBACKUP(int8_t txVoltageCalibration);
+#else
+  int8_t txVoltageCalibration;
+#endif
   NOBACKUP(int8_t backlightMode);
   NOBACKUP(TrainerData trainer);
   NOBACKUP(uint8_t view);            // index of view in main screen
@@ -759,8 +786,13 @@ PACK(struct RadioData {
   NOBACKUP(uint8_t unexpectedShutdown:1);
   NOBACKUP(uint8_t speakerPitch);
   NOBACKUP(int8_t speakerVolume);
+#if !defined(PCBTANGO)
   NOBACKUP(int8_t vBatMin);
   NOBACKUP(int8_t vBatMax);
+#else
+  int8_t vBatMin;
+  int8_t vBatMax;
+#endif
 
   NOBACKUP(uint8_t  backlightBright);
   NOBACKUP(uint32_t globalTimer);
@@ -880,6 +912,19 @@ static inline void check_struct()
   CHKSIZE(FrSkyLineData, 2);
   CHKSIZE(ModelHeader, 12);
   CHKTYPE(CurveData, 4);
+#elif defined(PCBTANGO)
+  CHKSIZE(LimitData, 11);
+  CHKSIZE(SwashRingData, 8);
+  CHKSIZE(FrSkyBarData, 5);
+  CHKSIZE(FrSkyLineData, 2);
+  CHKSIZE(ModelHeader, 22);
+  CHKTYPE(CurveData, 4);
+  CHKSIZE(MixData, 20);
+  CHKSIZE(ExpoData, 17);
+  CHKSIZE(CustomFunctionData, 9);
+  CHKSIZE(TimerData, 11);
+  CHKSIZE(FlightModeData, 36);
+  CHKSIZE(RadioData, 720);
 #else
   // Common for all variants
   CHKSIZE(LimitData, 5);

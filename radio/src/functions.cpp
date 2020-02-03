@@ -353,11 +353,11 @@ void evalFunctions(const CustomFunctionData * functions, CustomFunctionsContext 
             }
             break;
 #endif
-
+#if !defined(PCBTANGO)
           case FUNC_BACKLIGHT:
             newActiveFunctions |= (1 << FUNCTION_BACKLIGHT);
             break;
-
+#endif
 #if defined(PCBTARANIS)
           case FUNC_SCREENSHOT:
             if (!(functionsContext.activeSwitches & switch_mask)) {

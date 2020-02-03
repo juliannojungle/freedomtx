@@ -8,7 +8,11 @@ option(USB_SERIAL "Enable USB serial (CDC)" OFF)
 
 set(ARCH ARM)
 set(STM32USB_DIR ${THIRDPARTY_DIR}/STM32_USB-Host-Device_Lib_V2.2.0/Libraries)
-add_definitions(-DSTM32 -DLUA_INPUTS -DVARIO)
+if (PCB STREQUAL TANGO)
+    add_definitions(-DSTM32 -DLUA_INPUTS -DVARIO -DCROSSFIRE)
+else()
+    add_definitions(-DSTM32 -DLUA_INPUTS -DVARIO)
+endif()
 
 include_directories(${RADIO_SRC_DIRECTORY}/targets/common/arm/stm32)
 include_directories(${STM32USB_DIR}/STM32_USB_OTG_Driver/inc)
@@ -103,3 +107,11 @@ set(SRC
   ${SRC}
   io/bootloader_flash.cpp
   )
+
+if(PCB STREQUAL TANGO)
+  set(SRC
+    ${SRC}
+    telemetry/crossfire.cpp
+    )
+endif()
+

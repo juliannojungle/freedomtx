@@ -134,7 +134,17 @@ void per10ms()
       if ((g_tmr10ms - lastEvent >= 10) || (cw == new_cw)) { // 100ms
 
         putEvent(new_cw ? EVT_ROTARY_RIGHT : EVT_ROTARY_LEFT);
-
+#if defined(PCBTANGO)
+        if (g_trimEditMode != EDIT_TRIM_DISABLED) {
+          uint8_t key = (g_trimEditMode - 1) * 2;
+          if (new_cw) {
+            g_trimState = 0x01 << key;
+          }
+          else {
+            g_trimState = 0x01 << (key + 1);
+          }
+        }
+#endif
         // rotary encoder navigation speed (acceleration) detection/calculation
         static uint32_t delay = 2*ROTENC_DELAY_MIDSPEED;
 
@@ -181,7 +191,9 @@ void per10ms()
   sdPoll10ms();
 #endif
 
+#if !defined(PCBTANGO)
   outputTelemetryBuffer.per10ms();
+#endif
 
   heartbeat |= HEART_TIMER_10MS;
 }
@@ -259,6 +271,8 @@ void generalDefault()
   g_eeGeneral.switchConfig = (SWITCH_TOGGLE << 8) + (SWITCH_2POS << 6) + (SWITCH_3POS << 4) + (SWITCH_3POS << 2) + (SWITCH_3POS << 0);
 #elif defined(PCBTARANIS) || defined(PCBHORUS)
   g_eeGeneral.switchConfig = 0x00007bff; // 6x3POS, 1x2POS, 1xTOGGLE
+#elif defined(PCBTANGO)
+  g_eeGeneral.switchConfig = 0x00000a7d; // 2x3POS, 2x2POS, 2xTOGGLE
 #endif
 
   // vBatWarn is voltage in 100mV, vBatMin is in 100mV but with -9V offset, vBatMax has a -12V offset
@@ -267,6 +281,10 @@ void generalDefault()
     g_eeGeneral.vBatMin = BATTERY_MIN - 90;
   if (BATTERY_MAX != 120)
     g_eeGeneral.vBatMax = BATTERY_MAX - 120;
+
+#if defined(PCBTANGO)
+  g_eeGeneral.txVoltageCalibration = BATT_CALIB_OFFSET;
+#endif
 
 #if defined(DEFAULT_MODE)
   g_eeGeneral.stickMode = DEFAULT_MODE - 1;
@@ -277,13 +295,25 @@ void generalDefault()
 #endif
 
   g_eeGeneral.backlightMode = e_backlight_mode_all;
-  g_eeGeneral.lightAutoOff = 2;
   g_eeGeneral.inactivityTimer = 10;
 
   g_eeGeneral.ttsLanguage[0] = 'e';
   g_eeGeneral.ttsLanguage[1] = 'n';
-  g_eeGeneral.wavVolume = 2;
-  g_eeGeneral.backgroundVolume = 1;
+#if defined(PCBTANGO)
+  g_eeGeneral.wavVolume         = 1;
+  g_eeGeneral.backgroundVolume  = 0;
+  g_eeGeneral.beepMode          = 1;
+  g_eeGeneral.beepVolume        = -1;
+  g_eeGeneral.beepLength        = -1;
+  g_eeGeneral.speakerPitch      = 2;
+  g_eeGeneral.hapticLength      = -1;
+  g_eeGeneral.hapticMode        = 1;
+  g_eeGeneral.lightAutoOff      = 12;
+#else
+  g_eeGeneral.wavVolume         = 2;
+  g_eeGeneral.backgroundVolume  = 1;
+  g_eeGeneral.lightAutoOff      = 2;
+#endif
 
   for (int i=0; i<NUM_STICKS; ++i) {
     g_eeGeneral.trainer.mix[i].mode = 2;
@@ -463,7 +493,7 @@ void modelDefault(uint8_t id)
 
   memcpy(g_model.modelRegistrationID, g_eeGeneral.ownerRegistrationID, PXX2_LEN_REGISTRATION_ID);
 
-#if defined(LUA) && defined(PCBTARANIS) //Horus uses menuModelWizard() for wizard
+#if defined(LUA) && (defined(PCBTARANIS) || defined(PCBTANGO))//Horus uses menuModelWizard() for wizard
   if (isFileAvailable(WIZARD_PATH "/" WIZARD_NAME)) {
     f_chdir(WIZARD_PATH);
     luaExec(WIZARD_NAME);
@@ -748,14 +778,12 @@ void doSplash()
     inputsMoved();
 
     tmr10ms_t tgtime = get_tmr10ms() + SPLASH_TIMEOUT;
-
     while (tgtime > get_tmr10ms()) {
       RTOS_WAIT_TICKS(1);
 
       getADC();
 
       if (keyDown() || inputsMoved()) return;
-
 #if defined(PWR_BUTTON_PRESS)
       uint32_t pwr_check = pwrCheck();
       if (pwr_check == e_power_off) {
@@ -774,7 +802,7 @@ void doSplash()
       }
 #endif
 
-#if defined(FRSKY_RELEASE)
+#if defined(FRSKY_RELEASE) || defined(TBS_RELEASE)
       static uint8_t secondSplash = false;
       if (!secondSplash && get_tmr10ms() >= tgtime-200) {
         secondSplash = true;
@@ -1162,6 +1190,10 @@ tmr10ms_t jitterResetTime = 0;
 #if !defined(SIMU)
 uint16_t anaIn(uint8_t chan)
 {
+#if defined(PCBTANGO)
+  if( chan <= STICK4 )
+    return crossfireSharedData.sticks[chan];
+#endif
   return ANA_FILT(chan);
 }
 
@@ -1735,7 +1767,11 @@ void opentxInit()
 #if defined(GUI)
   menuHandlers[0] = menuMainView;
   #if MENUS_LOCK != 2/*no menus*/
-    menuHandlers[1] = menuModelSelect;
+    #if !defined(PCBTANGO)
+      menuHandlers[1] = menuModelSelect;
+    #else
+      menuHandlers[1] = menuModelMixAll;
+    #endif
   #endif
 #endif
 
@@ -1761,7 +1797,13 @@ void opentxInit()
 #if defined(SDCARD) && !defined(PCBMEGA2560)
   // SDCARD related stuff, only done if not unexpectedShutdown
   if (!unexpectedShutdown) {
-    sdInit();
+  #if defined(PCBTANGO)
+    if(!sdMounted()){
+  #endif
+      sdInit();
+  #if defined(PCBTANGO)
+    }
+  #endif
     logsInit();
   }
 #endif
@@ -1908,7 +1950,7 @@ int main()
 #endif
 
 
-#if defined(GUI) && !defined(PCBTARANIS) && !defined(PCBHORUS)
+#if defined(GUI) && !defined(PCBTARANIS) && !defined(PCBHORUS) && !defined(PCBTANGO)
   // TODO remove this
   lcdInit();
 #endif
@@ -1921,7 +1963,7 @@ int main()
   // lcdSetRefVolt(25);
 #endif
 
-#if defined(SPLASH) && (defined(PCBTARANIS) || defined(PCBHORUS))
+#if defined(SPLASH) && (defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO))
   drawSplash();
 #endif
 
@@ -1935,13 +1977,17 @@ int main()
 
 #if defined(PCBHORUS)
   if (!IS_FIRMWARE_COMPATIBLE_WITH_BOARD()) {
+  #if defined(COLORLCD)
     runFatalErrorScreen(STR_WRONG_PCBREV);
+  #endif
   }
 #endif
 
 #if !defined(EEPROM)
   if (!SD_CARD_PRESENT() && !UNEXPECTED_SHUTDOWN()) {
+  #if defined(COLORLCD)
     runFatalErrorScreen(STR_NO_SDCARD);
+  #endif
   }
 #endif
 
@@ -1977,7 +2023,7 @@ uint32_t pwrCheck()
   if (pwr_check_state == PWR_CHECK_OFF) {
     return e_power_off;
   }
-  else if (pwrPressed()) {
+  else if (pwrPressed() && get_tmr10ms() > PWR_PRESS_SHUTDOWN_THRESHOD) {
     if (TELEMETRY_STREAMING()) {
       message = STR_MODEL_STILL_POWERED;
     }

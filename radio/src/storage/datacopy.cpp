@@ -91,7 +91,7 @@ void copytrim_t(A * dest, B * src)
 template <class A, class B>
 void copyFlightModeData(A * dest, B * src)
 {
-  for (int i=0; i<6; i++) {
+  for (int i=0; i<NUM_TRIMS; i++) {
     copytrim_t(&dest->trim[i], &src->trim[i]);
   }
   dest->swtch = src->swtch;
@@ -235,7 +235,7 @@ template <class A, class B>
 void copyModelData(A * dest, B * src)
 {
   copyModelHeader(&dest->header, &src->header);
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<MAX_TIMERS; i++) {
     copyTimerData(&dest->timers[i], &src->timers[i]);
   }
   dest->telemetryProtocol = src->telemetryProtocol;
@@ -250,33 +250,33 @@ void copyModelData(A * dest, B * src)
   dest->extendedTrims = src->extendedTrims;
   dest->throttleReversed = src->throttleReversed;
   dest->beepANACenter = src->beepANACenter;
-  for (int i=0; i<64; i++) {
+  for (int i=0; i<MAX_MIXERS; i++) {
     copyMixData(&dest->mixData[i], &src->mixData[i]);
   }
-  for (int i=0; i<32; i++) {
+  for (int i=0; i<MAX_OUTPUT_CHANNELS; i++) {
     copyLimitData(&dest->limitData[i], &src->limitData[i]);
   }
-  for (int i=0; i<64; i++) {
+  for (int i=0; i<MAX_EXPOS; i++) {
     copyExpoData(&dest->expoData[i], &src->expoData[i]);
   }
-  for (int i=0; i<32; i++) {
+  for (int i=0; i<MAX_CURVES; i++) {
     copyCurveData(&dest->curves[i], &src->curves[i]);
   }
   memcpy(dest->points, src->points, sizeof(dest->points));
-  for (int i=0; i<64; i++) {
+  for (int i=0; i<MAX_LOGICAL_SWITCHES; i++) {
     copyLogicalSwitchData(&dest->logicalSw[i], &src->logicalSw[i]);
   }
-  for (int i=0; i<64; i++) {
+  for (int i=0; i<MAX_SPECIAL_FUNCTIONS; i++) {
     copyCustomFunctionData(&dest->customFn[i], &src->customFn[i]);
   }
   copySwashRingData(&dest->swashR, &src->swashR);
-  for (int i=0; i<9; i++) {
+  for (int i=0; i<MAX_FLIGHT_MODES; i++) {
     copyFlightModeData(&dest->flightModeData[i], &src->flightModeData[i]);
   }
-  for (int i=0; i<9; i++) {
+  for (int i=0; i<MAX_GVARS; i++) {
     copyGVarData(&dest->gvars[i], &src->gvars[i]);
   }
-  for (int i=0; i<2; i++) {
+  for (int i=0; i<NUM_MODULES; i++) {
     copyModuleData(&dest->moduleData[i], &src->moduleData[i]);
   }
   memcpy(dest->failsafeChannels, src->failsafeChannels, sizeof(dest->failsafeChannels));
@@ -316,20 +316,27 @@ void copyTrainerData(A * dest, B * src)
 template <class A, class B>
 void copyRadioData(A * dest, B * src)
 {
-  for (int i=0; i<13; i++) {
+  for (int i=0; i<NUM_STICKS+NUM_POTS+NUM_SLIDERS+NUM_MOUSE_ANALOGS+NUM_DUMMY_ANAS; i++) {
     copyCalibData(&dest->calib[i], &src->calib[i]);
   }
   dest->spareRadio = src->spareRadio;
   dest->stickMode = src->stickMode;
   dest->telemetryBaudrate = src->telemetryBaudrate;
+#if !defined(PCBTANGO)
   dest->splashSpares = src->splashSpares;
+#endif
   dest->switchesDelay = src->switchesDelay;
-  for (int i=0; i<64; i++) {
+  for (int i=0; i<MAX_SPECIAL_FUNCTIONS; i++) {
     copyCustomFunctionData(&dest->customFn[i], &src->customFn[i]);
   }
   dest->slidersConfig = src->slidersConfig;
   dest->switchConfig = src->switchConfig;
   dest->potsConfig = src->potsConfig;
+#if defined(PCBTANGO)
+  dest->vBatMax = src->vBatMax;
+  dest->vBatMin = src->vBatMin;
+  dest->txVoltageCalibration = src->txVoltageCalibration;
+#endif
   memcpy(dest->ownerRegistrationID, src->ownerRegistrationID, sizeof(dest->ownerRegistrationID));
 }
 

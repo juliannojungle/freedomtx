@@ -44,6 +44,8 @@
   const int8_t ana_direction[NUM_ANALOGS] = {1,-1,-1,1,  -1,1,  1};
 #elif defined(REV4a)
   const int8_t ana_direction[NUM_ANALOGS] = {1,-1,1,-1,  1,-1,0,  1,1,  1};
+#elif defined(PCBTANGO)
+  const int8_t ana_direction[NUM_ANALOGS] = {1,1,1,1,  1,1,1,  1,1,  1};
 #else
   const int8_t ana_direction[NUM_ANALOGS] = {1,-1,1,-1,  1,1,0,   1,1,  1};
 #endif
@@ -55,6 +57,10 @@
   #define FIRST_ANALOG_ADC             0
   #define NUM_ANALOGS_ADC              10
   #define NUM_ANALOGS_ADC_EXT          (NUM_ANALOGS - 10)
+#elif defined(PCBTANGO)
+  #define FIRST_ANALOG_ADC             9
+  #define NUM_ANALOGS_ADC              1
+  #define NUM_ANALOGS_ADC_EXT          0
 #else
   #define FIRST_ANALOG_ADC             0
   #define NUM_ANALOGS_ADC              NUM_ANALOGS
@@ -122,6 +128,9 @@ void adcInit()
 #elif defined(PCBX3)
   ADC_MAIN->SQR2 = (ADC_CHANNEL_RTC<<0); // conversions 7 and more
   ADC_MAIN->SQR3 = (ADC_CHANNEL_STICK_LH<<0) + (ADC_CHANNEL_STICK_LV<<5) + (ADC_CHANNEL_STICK_RV<<10) + (ADC_CHANNEL_STICK_RH<<15) + (ADC_CHANNEL_POT1<<20) + (ADC_CHANNEL_BATT<<25); // conversions 1 to 6
+#elif defined(PCBTANGO)
+  ADC_MAIN->SQR2 = 0;
+  ADC_MAIN->SQR3 = (ADC_CHANNEL_BATT<<0) + (ADC_CHANNEL_RTC<<5); // conversion 1 to 2
 #else
   ADC_MAIN->SQR2 = (ADC_CHANNEL_POT3<<0) + (ADC_CHANNEL_SLIDER1<<5) + (ADC_CHANNEL_SLIDER2<<10) + (ADC_CHANNEL_BATT<<15) + (ADC_CHANNEL_RTC<<20); // conversions 7 and more
   ADC_MAIN->SQR3 = (ADC_CHANNEL_STICK_LH<<0) + (ADC_CHANNEL_STICK_LV<<5) + (ADC_CHANNEL_STICK_RV<<10) + (ADC_CHANNEL_STICK_RH<<15) + (ADC_CHANNEL_POT1<<20) + (ADC_CHANNEL_POT2<<25); // conversions 1 to 6

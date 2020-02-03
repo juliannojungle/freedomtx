@@ -33,6 +33,11 @@ void onUSBConnectMenu(const char *result)
   else if (result == STR_USB_JOYSTICK) {
     setSelectedUsbMode(USB_JOYSTICK_MODE);
   }
+#if defined(PCBTANGO)
+  else if (result == STR_USB_AGENT) {
+    setSelectedUsbMode(USB_AGENT_MODE);
+  }
+#endif
   else if (result == STR_USB_SERIAL) {
     setSelectedUsbMode(USB_SERIAL_MODE);
   }
@@ -49,15 +54,28 @@ void handleUsbConnection()
       usbPluggedIn();
     }
   }
+#if defined(PCBTANGO)
+  static uint8_t usbFirstPluggedStage = 2;
+  if ((!usbStarted() && usbPlugged() && getSelectedUsbMode() == USB_UNSELECTED_MODE) ||
+          (usbFirstPluggedStage > 0 && usbPlugged() && getSelectedUsbMode() == USB_AGENT_MODE)) {
+      usbFirstPluggedStage = 1;
+#else
   if (!usbStarted() && usbPlugged() && getSelectedUsbMode() == USB_UNSELECTED_MODE) {
+#endif
     if (g_eeGeneral.USBMode == USB_UNSELECTED_MODE && popupMenuItemsCount == 0) {
       POPUP_MENU_ADD_ITEM(STR_USB_JOYSTICK);
+#if defined(PCBTANGO)
+      POPUP_MENU_ADD_ITEM(STR_USB_AGENT);
+#endif
       POPUP_MENU_ADD_ITEM(STR_USB_MASS_STORAGE);
 #if defined(DEBUG)
       POPUP_MENU_ADD_ITEM(STR_USB_SERIAL);
 #endif
       POPUP_MENU_START(onUSBConnectMenu);
     }
+#if defined(PCBTANGO)
+    usbFirstPluggedStage = 0;
+#endif
     if (g_eeGeneral.USBMode != USB_UNSELECTED_MODE) {
       setSelectedUsbMode(g_eeGeneral.USBMode);
     }
@@ -491,7 +509,7 @@ void perMain()
 
   event_t evt = getEvent(false);
 
-#if defined(RAMBACKUP)
+#if defined(RAMBACKUP) && !defined(PCBTANGO)
   if (unexpectedShutdown) {
     drawFatalErrorScreen(STR_EMERGENCY_MODE);
     return;
@@ -507,7 +525,7 @@ void perMain()
   sdcard_present_before = sdcard_present_now;
 #endif
 
-#if !defined(EEPROM)
+#if !defined(EEPROM) && !defined(PCBTANGO)
   // In case the SD card is removed during the session
   if (!SD_CARD_PRESENT() && !unexpectedShutdown) {
     drawFatalErrorScreen(STR_NO_SDCARD);

@@ -30,11 +30,19 @@ extern "C" {
 #include "opentx.h"
 #include "debug.h"
 
+#if defined(AGENT)
+#include "io/crsf/crsf.h"
+#endif
+
 static bool usbDriverStarted = false;
 #if defined(BOOT)
 static usbMode selectedUsbMode = USB_MASS_STORAGE_MODE;
 #else
+#if defined(PCBTANGO)
+static usbMode selectedUsbMode = USB_AGENT_MODE;
+#else
 static usbMode selectedUsbMode = USB_UNSELECTED_MODE;
+#endif
 #endif
 
 int getSelectedUsbMode()
@@ -44,7 +52,18 @@ int getSelectedUsbMode()
 
 void setSelectedUsbMode(int mode)
 {
+#if defined(PCBTANGO)
+  static int prev_mode = USB_AGENT_MODE;
+#endif
   selectedUsbMode = usbMode(mode);
+
+#if defined(PCBTANGO)
+  // for disconnecting usb from host without unplugging
+  if(prev_mode != mode){
+    usbStop();
+  }
+  prev_mode = mode;
+#endif
 }
 
 int usbPlugged()
@@ -90,6 +109,12 @@ void usbStart()
     case USB_JOYSTICK_MODE:
       // initialize USB as HID device
       USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_HID_cb, &USR_cb);
+      break;
+#endif
+#if defined(AGENT) && !defined(BOOT)
+    case USB_AGENT_MODE:
+      // initialize USB as HID device
+      USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_AGENT_cb, &USR_cb);
       break;
 #endif
 #if defined(USB_SERIAL)
@@ -162,4 +187,114 @@ void usbJoystickUpdate()
     USBD_HID_SendReport(&USB_OTG_dev, HID_Buffer, HID_IN_PACKET);
   }
 }
+
+#if defined(AGENT)
+#define USB_HID_FIFO_SIZE		          128
+
+static Fifo<uint8_t, USB_HID_FIFO_SIZE> *hidTxFifo = 0;
+static Fifo<uint8_t, USB_HID_FIFO_SIZE> *hidTxFifoBackup = 0;
+
+void usbAgentWrite( uint8_t *pData )
+{
+  static uint8_t HID_Buffer[HID_AGENT_IN_PACKET];
+  memcpy(HID_Buffer, pData, HID_AGENT_IN_PACKET);
+  USBD_AGENT_SendReport(&USB_OTG_dev, HID_Buffer, HID_AGENT_IN_PACKET);
+}
+
+static uint8_t isUsbIdle(){
+  extern uint8_t ReportSent;
+  return ReportSent;
+}
+
+void usb_tx(){
+  static uint8_t isbusy = 0;
+  if(!isbusy){
+    isbusy = 1;
+    uint8_t sendData[HID_AGENT_IN_PACKET];
+    memset(sendData, 0, HID_AGENT_IN_PACKET);
+    if(hidTxFifo != 0 && hidTxFifo->size() > 0 && isUsbIdle()){
+      for(uint8_t i = 0; i < HID_AGENT_IN_PACKET; i++){
+        if(!hidTxFifo->pop(sendData[i])){
+          break;
+        }
+      }
+      USBD_AGENT_SendReport(&USB_OTG_dev, sendData, HID_AGENT_IN_PACKET);
+    }
+
+    memset(sendData, 0, HID_AGENT_IN_PACKET);
+    if(hidTxFifoBackup != 0 && hidTxFifoBackup->size() > 0 && isUsbIdle()){
+      for(uint8_t i = 0; i < HID_AGENT_IN_PACKET; i++){
+        if(!hidTxFifoBackup->pop(sendData[i])){
+          break;
+        }
+      }
+      USBD_AGENT_SendReport(&USB_OTG_dev, sendData, HID_AGENT_IN_PACKET);
+    }
+    if(hidTxFifo != 0 && selectedUsbMode != USB_AGENT_MODE){
+      free(hidTxFifo);
+      hidTxFifo = 0;
+    }
+    if(hidTxFifoBackup != 0 && hidTxFifoBackup->size() == 0){
+      free(hidTxFifoBackup);
+      hidTxFifoBackup = 0;
+    }
+    isbusy = 0;
+  }
+}
+
+#define LIBCRSF_BF_LINK_STATISTICS  0x14
+
+void CRSF_To_USB_HID( uint8_t *p_arr )
+{
+  *p_arr = LIBCRSF_UART_SYNC;
+  if(hidTxFifo == 0 && selectedUsbMode == USB_AGENT_MODE && usbStarted()){
+    hidTxFifo = (Fifo<uint8_t, USB_HID_FIFO_SIZE>*)malloc(sizeof(Fifo<uint8_t, USB_HID_FIFO_SIZE>));
+    if(hidTxFifo != 0){
+      memset(hidTxFifo, 0, sizeof(Fifo<uint8_t, USB_HID_FIFO_SIZE>));
+    }
+  }
+
+  // block sending telemetry and opentx related to usb
+  if( ( *(p_arr + LIBCRSF_TYPE_ADD ) != LIBCRSF_BF_LINK_STATISTICS ) && ( *(p_arr + LIBCRSF_TYPE_ADD) != LIBCRSF_OPENTX_RELATED ) ){
+    if(hidTxFifo != 0 && (USB_HID_FIFO_SIZE - hidTxFifo->size()) >= (uint16_t)(p_arr[LIBCRSF_LENGTH_ADD] + 2)){
+      for(uint8_t i = 0; i < HID_AGENT_IN_PACKET; i++){
+        hidTxFifo->push(p_arr[i]);
+      }
+    }
+    else{
+      if(hidTxFifoBackup == 0 && selectedUsbMode == USB_AGENT_MODE && usbStarted()){
+        hidTxFifoBackup = (Fifo<uint8_t, USB_HID_FIFO_SIZE>*)malloc(sizeof(Fifo<uint8_t, USB_HID_FIFO_SIZE>));
+        if(hidTxFifoBackup != 0){
+          memset(hidTxFifoBackup, 0, sizeof(Fifo<uint8_t, USB_HID_FIFO_SIZE>));
+        }
+      }
+      if(hidTxFifoBackup != 0){
+        for(uint8_t i = 0; i < HID_AGENT_IN_PACKET; i++){
+          hidTxFifoBackup->push(p_arr[i]);
+        }
+      }
+    }
+  }
+  usb_tx();
+}
+
+void AgentHandler(){
+  /* handle TBS Agent requests */
+  extern uint8_t ReportReceived;
+  extern uint8_t HID_Buffer[HID_AGENT_OUT_PACKET];
+
+  usb_tx();
+
+  if(ReportReceived){
+    ReportReceived = 0;
+    static _libCrsf_CRSF_PARSE_DATA HID_CRSF_Data;
+    for( uint8_t i = 0; i < HID_AGENT_OUT_PACKET; i++ ){
+      if ( libCrsf_CRSF_Parse( &HID_CRSF_Data, HID_Buffer[i] )) {
+        libCrsf_CRSF_Routing( USB_HID, HID_CRSF_Data.Payload );
+        break;
+      }
+    }
+  }
+}
+#endif // AGENT
 #endif

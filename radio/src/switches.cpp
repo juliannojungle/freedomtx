@@ -57,8 +57,8 @@ LogicalSwitchesFlightModeContext lswFm[MAX_FLIGHT_MODES];
 #define LS_LAST_VALUE(fm, idx) lswFm[fm].lsw[idx].lastValue
 
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
-#if defined(PCBX9E)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
+#if defined(PCBX9E) || defined(PCBTANGO)
 tmr10ms_t switchesMidposStart[16];
 #else
 tmr10ms_t switchesMidposStart[6]; // TODO constant
@@ -129,6 +129,14 @@ uint64_t check3PosSwitchPosition(uint8_t idx, uint8_t sw, bool startup)
 void getSwitchesPosition(bool startup)
 {
   uint64_t newPos = 0;
+#if defined(PCBTANGO)
+  CHECK_2POS(SW_SA);
+  CHECK_3POS(1, SW_SB);
+  CHECK_3POS(2, SW_SC);
+  CHECK_2POS(SW_SD);
+  CHECK_2POS(SW_SE);
+  CHECK_2POS(SW_SF);
+#else
   CHECK_3POS(0, SW_SA);
   CHECK_3POS(1, SW_SB);
   CHECK_3POS(2, SW_SC);
@@ -168,6 +176,7 @@ void getSwitchesPosition(bool startup)
   CHECK_3POS(13, SW_SP);
   CHECK_3POS(14, SW_SQ);
   CHECK_3POS(15, SW_SR);
+#endif
 #endif
 
   switchesPos = newPos;
@@ -503,7 +512,7 @@ swsrc_t getMovedSwitch()
   static tmr10ms_t s_move_last_time = 0;
   swsrc_t result = 0;
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
   for (int i=0; i<NUM_SWITCHES; i++) {
     if (SWITCH_EXISTS(i)) {
       swarnstate_t mask = ((swarnstate_t)0x03 << (i*2));
@@ -555,7 +564,7 @@ void checkSwitches()
 
   while (1) {
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
   #define GETADC_COUNT 1
 #endif
 
@@ -591,7 +600,7 @@ void checkSwitches()
         }
       }
     }
-#elif defined(PCBTARANIS)
+#elif defined(PCBTARANIS) || defined(PCBTANGO)
     for (int i=0; i<NUM_SWITCHES; i++) {
       if (SWITCH_WARNING_ALLOWED(i) && !(g_model.switchWarningEnable & (1<<i))) {
         swarnstate_t mask = ((swarnstate_t)0x03 << (i*2));
@@ -600,6 +609,7 @@ void checkSwitches()
         }
       }
     }
+  #if !defined(PCBTANGO)
     if (g_model.potsWarnMode) {
       evalFlightModeMixes(e_perout_mode_normal, 0);
       bad_pots = 0;
@@ -613,14 +623,15 @@ void checkSwitches()
         }
       }
     }
+  #endif
 #else
     for (int i=0; i<NUM_SWITCHES-1; i++) {
       if (!(g_model.switchWarningEnable & (1<<i))) {
-      	if (i == 0) {
-      	  if ((states & 0x03) != (switches_states & 0x03)) {
-      	    warn = true;
-      	  }
-      	}
+        if (i == 0) {
+          if ((states & 0x03) != (switches_states & 0x03)) {
+            warn = true;
+          }
+        }
         else if ((states & (1<<(i+1))) != (switches_states & (1<<(i+1)))) {
           warn = true;
         }
@@ -636,10 +647,16 @@ void checkSwitches()
     backlightOn();
 
     // first - display warning
-#if defined(PCBTARANIS) || defined(PCBHORUS)
-    if ((last_bad_switches != switches_states) || (last_bad_pots != bad_pots)) {
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
+  #if defined(PCBTANGO)
+    if ((last_bad_switches != switches_states)) {
+      drawAlertBox(STR_SWITCHWARN, NULL, STR_PRESSANYKEYTOSKIP);
+      if (last_bad_switches == 0xff) {
+  #else
+      if ((last_bad_switches != switches_states) || (last_bad_pots != bad_pots)) {
       drawAlertBox(STR_SWITCHWARN, NULL, STR_PRESSANYKEYTOSKIP);
       if (last_bad_switches == 0xff || last_bad_pots == 0xff) {
+  #endif
         AUDIO_ERROR_MESSAGE(AU_SWITCH_ALERT);
       }
       int x = SWITCH_WARNING_LIST_X, y = SWITCH_WARNING_LIST_Y;
@@ -718,7 +735,9 @@ void checkSwitches()
           }
         }
       }
+  #if !defined(PCBTANGO)
       last_bad_pots = bad_pots;
+  #endif
 #else
     if (last_bad_switches != switches_states) {
       RAISE_ALERT(STR_SWITCHWARN, NULL, STR_PRESSANYKEYTOSKIP, last_bad_switches == 0xff ? AU_SWITCH_ALERT : AU_NONE);

@@ -32,11 +32,17 @@ PACK(struct RamBackupUncompressed {
 
 #include "datacopy.cpp"
 
+#if defined(PCBTANGO)
+Backup::RamBackupUncompressed ramBackupUncompressed;
+#else
 Backup::RamBackupUncompressed ramBackupUncompressed __DMA;
+#endif
 
 #if defined(SIMU)
 RamBackup _ramBackup;
 RamBackup * ramBackup = &_ramBackup;
+#elif defined(PCBTANGO)
+RamBackup * ramBackup = (RamBackup *)(BKPSRAM_BASE + 0x800);
 #else
 RamBackup * ramBackup = (RamBackup *)BKPSRAM_BASE;
 #endif
@@ -45,8 +51,18 @@ void rambackupWrite()
 {
   copyRadioData(&ramBackupUncompressed.radio, &g_eeGeneral);
   copyModelData(&ramBackupUncompressed.model, &g_model);
+#if defined(PCBTANGO)
+  ramBackup->size = compress(ramBackup->data, 2044, (const uint8_t *)&ramBackupUncompressed, sizeof(ramBackupUncompressed));
+  memset(&ramBackupUncompressed, 0, sizeof(ramBackupUncompressed));
+  if (uncompress((uint8_t *)&ramBackupUncompressed, sizeof(ramBackupUncompressed), ramBackup->data, ramBackup->size) != sizeof(ramBackupUncompressed))
+  {
+    TRACE("ram uncompress failed\n");
+  }
+  TRACE("rambackupWrite success\n");
+#else
   ramBackup->size = compress(ramBackup->data, 4094, (const uint8_t *)&ramBackupUncompressed, sizeof(ramBackupUncompressed));
   TRACE("RamBackupWrite sdsize=%d backupsize=%d rlcsize=%d", sizeof(ModelData)+sizeof(RadioData), sizeof(Backup::RamBackupUncompressed), ramBackup->size);
+#endif
 }
 
 bool rambackupRestore()
