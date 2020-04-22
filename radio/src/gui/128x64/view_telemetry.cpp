@@ -20,7 +20,11 @@
 
 #include "opentx.h"
 
+#if defined(PCBTANGO)
+#define STATUS_BAR_Y     (9*FH+1)
+#else
 #define STATUS_BAR_Y     (7*FH+1)
+#endif
 
 uint8_t s_frsky_view = 0;
 
@@ -109,7 +113,11 @@ bool displayNumbersTelemetryScreen(TelemetryScreenData & screen)
 {
   // Custom Screen with numbers
   uint8_t fields_count = 0;
+#if defined(PCBTANGO)
+  lcdDrawSolidVerticalLine(63, 8, 62);
+#else
   lcdDrawSolidVerticalLine(63, 8, 48);
+#endif
   for (uint8_t i=0; i<4; i++) {
     for (uint8_t j=0; j<NUM_LINE_ITEMS; j++) {
       source_t field = screen.lines[i].sources[j];
@@ -119,11 +127,17 @@ bool displayNumbersTelemetryScreen(TelemetryScreenData & screen)
       if (i==3) {
         if (!TELEMETRY_STREAMING()) {
           displayRssiLine();
+#if !defined(PCBTANGO)
           return fields_count;
+#endif
         }
       }
       if (field) {
+#if defined(PCBTANGO)
+        LcdFlags att = RIGHT|MIDSIZE|NO_UNIT;
+#else
         LcdFlags att = (i==3 ? RIGHT|NO_UNIT : RIGHT|MIDSIZE|NO_UNIT);
+#endif
         coord_t pos[] = {0, 65, 130};
         if (field >= MIXSRC_FIRST_TIMER && field <= MIXSRC_LAST_TIMER && i!=3) {
           // there is not enough space on LCD for displaying "Tmr1" or "Tmr2" and still see the - sign, we write "T1" or "T2" instead
@@ -218,7 +232,7 @@ enum NavigationDirection {
 #if defined(NAVIGATION_XLITE)
 #define EVT_KEY_PREVIOUS_VIEW          EVT_KEY_LONG(KEY_LEFT)
 #define EVT_KEY_NEXT_VIEW              EVT_KEY_LONG(KEY_RIGHT)
-#elif defined(NAVIGATION_X7)
+#elif defined(NAVIGATION_X7) || defined(PCBTANGO)
 #define EVT_KEY_PREVIOUS_VIEW          EVT_KEY_LONG(KEY_PAGE)
 #define EVT_KEY_NEXT_VIEW              EVT_KEY_BREAK(KEY_PAGE)
 #else

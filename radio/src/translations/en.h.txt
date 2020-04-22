@@ -86,9 +86,13 @@
 #define LEN_COUNTRYCODES               TR("\002", "\007")
 #define TR_COUNTRYCODES                TR("US""JP""EU", "America""Japan\0 ""Europe\0")
 
+#if defined(PCBTANGO)
+#define LEN_USBMODES                   TR("\006", "\010")
+#define TR_USBMODES                    TR("Ask\0  ""Joyst\0""Agent\0""SDCard""Serial", "Ask\0    ""Joystick""Agent\0 ""Storage\0""Serial\0 ")
+#else
 #define LEN_USBMODES                   TR("\006", "\010")
 #define TR_USBMODES                    TR("Ask\0  ""Joyst\0""SDCard""Serial", "Ask\0    ""Joystick""Storage\0""Serial\0 ")
-
+#endif
 #define LEN_JACKMODES                  "\007"
 #define TR_JACKMODES                   "Ask\0   ""Audio\0 ""Trainer"
 
@@ -300,6 +304,9 @@
 #elif defined(PCBTARANIS)
   #define LEN_VKEYS                    "\005"
   #define TR_VKEYS                     "Menu\0""Exit\0""Enter""Page\0""Plus\0""Minus"
+#elif defined(PCBTANGO)
+  #define LEN_VKEYS                    "\005"
+  #define TR_VKEYS                     "Menu\0""Exit\0""Enter""Page\0""Plus\0""Minus"
 #else
   #define LEN_VKEYS                    "\005"
   #define TR_VKEYS                     "Menu\0""Exit\0""Down\0""Up\0  ""Right""Left\0"
@@ -391,7 +398,7 @@
   #define BREAKSPACE                   " "
 #endif
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
   #define TR_ENTER                     "[ENTER]"
 #else
   #define TR_ENTER                     "[MENU]"
@@ -552,6 +559,26 @@
   #define TR_SETMIDPOINT               "CENTER STICKS/SLIDERS"
   #define TR_MOVESTICKSPOTS            "MOVE STICKS/POTS"
   #define TR_MENUWHENDONE              TR_ENTER " WHEN DONE"
+#elif defined(PCBTANGO)
+  #define TR_MENUTOSTART               CENTER "\010" TR_ENTER " TO START"
+  #define TR_LEFT                      "\005LEFT"
+  #define TR_RIGHT                     "\005RIGHT"
+  #define TR_BOTH                      "\005BOTH"
+  #define TR_SETMIDPOINT               TR(CENTER "\004SET STICKS MIDPOINT", CENTER "\004CENTER STICKS/SLIDERS")
+  #define TR_MOVESTICKSPOTS            CENTER "\006MOVE STICKS/POTS"
+  #define TR_MOVESTICK_P0              CENTER "\004HOLD STICK AT CENTER"
+  #define TR_MOVESTICK_P1              CENTER "\004HOLD AT MIDDLE RIGHT"
+  #define TR_MOVESTICK_P2              CENTER "\006HOLD AT TOP RIGHT"
+  #define TR_MOVESTICK_P3              CENTER "\006HOLD AT TOP MIDDLE"
+  #define TR_MOVESTICK_P4              CENTER "\007HOLD AT TOP LEFT"
+  #define TR_MOVESTICK_P5              CENTER "\004HOLD AT MIDDLE LEFT"
+  #define TR_MOVESTICK_P6              CENTER "\004HOLD AT BOTTOM LEFT"
+  #define TR_MOVESTICK_P7              CENTER "\003HOLD AT BOTTOM MIDDLE"
+  #define TR_MOVESTICK_P8              CENTER "\003HOLD AT BOTTOM RIGHT"
+  #define TR_CAL_POINTS                CENTER "\002CALCULATING CONSTANTS"
+  #define TR_RELEASE_STICK             CENTER "\006RELEASE THE STICK"  
+  #define TR_MOVE_PLUS                 CENTER "\005MOVE IN \"+\" PATTERN"
+  #define TR_MENUWHENDONE              CENTER "\006" TR_ENTER " WHEN DONE"
 #else
   #define TR_MENUTOSTART               CENTER "\010" TR_ENTER " TO START"
   #define TR_SETMIDPOINT               TR(CENTER "\004SET STICKS MIDPOINT", CENTER "\004CENTER STICKS/SLIDERS")
@@ -623,8 +650,13 @@
 #define TR_MONITOR_SWITCHES            "LOGICAL SWITCHES MONITOR"
 #define TR_MONITOR_OUTPUT_DESC         "Outputs"
 #define TR_MONITOR_MIXER_DESC          "Mixers"
-  #define TR_RECEIVER_NUM              TR("RxNum", "Receiver No.")
-  #define TR_RECEIVER                  "Receiver"
+#if defined(PCBTANGO)
+    #define TR_CROSSFIRE               "Crossfire"
+    #define TR_RECEIVER_NUM            TR("Model Match", "Receiver No.")
+#else
+    #define TR_RECEIVER_NUM            TR("RxNum", "Receiver No.")
+#endif
+#define TR_RECEIVER                    "Receiver"
 #define TR_MULTI_RFTUNE                TR("Freq tune", "RF Freq. fine tune")
 #define TR_MULTI_TELEMETRY             "Telemetry"
 #define TR_MULTI_VIDFREQ               TR("Vid. freq.", "Video frequency")
@@ -881,6 +913,7 @@
 #define TR_STATISTICS                  "Statistics"
 #define TR_ABOUT_US                    "About"
 #define TR_USB_JOYSTICK                "USB Joystick (HID)"
+#define TR_USB_AGENT                   "USB Agent (HID)"
 #define TR_USB_MASS_STORAGE            "USB Storage (SD)"
 #define TR_USB_SERIAL                  "USB Serial (Debug)"
 #define TR_SETUP_SCREENS               "Setup screens"
@@ -1035,6 +1068,12 @@
 #define TR_ABOUT_OPENTX_4              TR("Support through donations", "for free. Support through")
 #define TR_ABOUT_OPENTX_5              TR("is welcome!", "donations is welcome!")
 
+#define TR_ABOUT_FREEDOMTX_1           TR("FreedomTX is a fork of Open", "FreedomTX is a fork of Open")
+#define TR_ABOUT_FREEDOMTX_2           TR("TX. Both projects are open", "TX. Both projects are open")
+#define TR_ABOUT_FREEDOMTX_3           TR("source, non commercial, no", "source, non commercial, no")
+#define TR_ABOUT_FREEDOMTX_4           TR("warranties. Support OpenTX", "warranties. Support OpenTX")
+#define TR_ABOUT_FREEDOMTX_5           TR("through donations!", "through donations!")
+
 #define TR_ABOUT_BERTRAND_1            "Bertrand Songis"
 #define TR_ABOUT_BERTRAND_2            "OpenTX main author"
 #define TR_ABOUT_BERTRAND_3            "Companion co-author"
@@ -1163,7 +1202,6 @@
 #define TR_JITTER_FILTER               "ADC filter"
 #define TR_RTC_CHECK                   TR("Check RTC", "Check RTC voltage")
 #define TR_AUTH_FAILURE                "Auth-failure"
-
 #define ZSTR_RSSI                      "RSSI"
 #define ZSTR_R9PW                      "R9PW"
 #define ZSTR_RAS                       "SWR"

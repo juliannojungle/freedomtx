@@ -257,6 +257,7 @@ void menuModelDisplay(event_t event)
             const coord_t pos[] = {DISPLAY_COL1, DISPLAY_COL2, DISPLAY_COL3};
             drawSource(pos[c], y, *value, cellAttr);
             if (cellAttr && s_editMode>0) {
+              TRACE("value = %d", *value);
               *value = checkIncDec(event, *value, 0, MIXSRC_LAST_TELEM, EE_MODEL|INCDEC_SOURCE|NO_INCDEC_MARKS, isSourceAvailable);
             }
           }

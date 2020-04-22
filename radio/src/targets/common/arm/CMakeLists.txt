@@ -7,18 +7,29 @@ option(TRACE_SD_CARD "Traces SD enabled" OFF)
 option(TRACE_FATFS "Traces FatFS enabled" OFF)
 option(TRACE_AUDIO "Traces audio enabled" OFF)
 option(DEBUG_TRACE_BUFFER "Debug Trace Screen" OFF)
-option(XJT "XJT TX Module" ON)
-option(MODULE_SIZE_STD "Standard size TX Module" ON)
-option(PPM "PPM TX Module" ON)
-option(DSM2 "DSM2 TX Module" ON)
-option(SBUS "SBUS TX Module" ON)
-option(CROSSFIRE "Crossfire TX Module" ON)
-option(MULTIMODULE "DIY Multiprotocol TX Module (https://github.com/pascallanger/DIY-Multiprotocol-TX-Module)" ON)
+if (PCB STREQUAL TANGO)
+  option(XJT "XJT TX Module" OFF)
+  option(MODULE_SIZE_STD "Standard size TX Module" OFF)
+  option(PPM "PPM TX Module" OFF)
+  option(DSM2 "DSM2 TX Module" OFF)
+  option(SBUS "SBUS TX Module" OFF)
+  option(CROSSFIRE "Crossfire TX Module" ON)
+  option(MULTIMODULE "DIY Multiprotocol TX Module (https://github.com/pascallanger/DIY-Multiprotocol-TX-Module)" OFF)
+else()
+  option(XJT "XJT TX Module" ON)
+  option(MODULE_SIZE_STD "Standard size TX Module" ON)
+  option(PPM "PPM TX Module" ON)
+  option(DSM2 "DSM2 TX Module" ON)
+  option(SBUS "SBUS TX Module" ON)
+  option(CROSSFIRE "Crossfire TX Module" ON)
+  option(MULTIMODULE "DIY Multiprotocol TX Module (https://github.com/pascallanger/DIY-Multiprotocol-TX-Module)" ON)
+endif()
 option(DEBUG_INTERRUPTS "Count interrupts" OFF)
 option(DEBUG_LATENCY "Debug latency" OFF)
 option(DEBUG_USB_INTERRUPTS "Count individual USB interrupts" OFF)
 option(DEBUG_TASKS "Task switching statistics" OFF)
 option(DEBUG_TIMERS "Time critical parts of the code" OFF)
+
 
 if(TIMERS EQUAL 3)
   add_definitions(-DTIMERS=3)
@@ -169,6 +180,14 @@ foreach(LANGUAGE ${TTS_LANGUAGES})
   set(SRC ${SRC} translations/tts_${lang_lower}.cpp)
 endforeach()
 
+if (NOT PCB STREQUAL TANGO)
+  set(SRC
+    ${SRC}
+    telemetry/frsky.cpp
+    telemetry/frsky_pxx2.cpp
+    )
+endif()
+
 set(SRC
   ${SRC}
   main.cpp
@@ -176,10 +195,8 @@ set(SRC
   audio.cpp
   telemetry/telemetry.cpp
   telemetry/telemetry_sensors.cpp
-  telemetry/frsky.cpp
   telemetry/frsky_d.cpp
   telemetry/frsky_sport.cpp
-  telemetry/frsky_pxx2.cpp
   crc.cpp
   vario.cpp
   )

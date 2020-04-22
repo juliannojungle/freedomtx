@@ -22,6 +22,10 @@
 #include "modelslist.h"
 #include "conversions/conversions.h"
 
+#if defined(EEPROM_SDCARD)
+ModelHeader modelHeaders[MAX_MODELS];
+#endif
+
 void getModelPath(char * path, const char * filename)
 {
   strcpy(path, STR_MODELS_PATH);
@@ -109,7 +113,7 @@ const char * loadFile(const char * fullpath, uint8_t * data, uint16_t maxsize, u
 
   TRACE("loadFile(%s)", fullpath);
 
-  const char * err = openFile(fullpath, &file, &size, version);
+   const char * err = openFile(fullpath, &file, &size, version);
   if (err)
     return err;
 
@@ -131,6 +135,27 @@ const char * readModel(const char * filename, uint8_t * buffer, uint32_t size, u
   return loadFile(path, buffer, size, version);
 }
 
+#if defined(PCBTANGO)
+uint16_t getModelSize(const char * filename)
+{
+  char path[256];
+  FIL      file;
+  uint16_t size;
+  uint8_t  version;
+
+  memset(path, 0, sizeof(path));
+  getModelPath(path, filename);
+
+  const char * err = openFile(path, &file, &size, &version);
+  if (err)
+    return -1;
+
+  f_close(&file);
+
+  return size;
+}
+#endif
+
 const char * loadModel(const char * filename, bool alarms)
 {
   uint8_t version;
@@ -147,13 +172,39 @@ const char * loadModel(const char * filename, bool alarms)
     storageCheck(true);
     alarms = false;
   }
-  else if (version < EEPROM_VER) {
+
+#if defined(TANGO_CONVERT_VERSION_101)
+  uint32_t model_size;
+
+  model_size = getModelSize(filename);
+  if (model_size == MODEL_DATA_SIZE_101)
+  {
+    convertModelData(version);
+    writeModel();
+    model_size = getModelSize(filename);
+    if (model_size == MODEL_DATA_SIZE_110)
+    {
+      TRACE("convert model data to v1.1.0 success");
+    }
+    else
+    {
+      TRACE("convert model data to v1.1.0 failed");
+    }
+  }
+#else
+  if (version < EEPROM_VER) {
     convertModelData(version);
   }
+#endif
 
   postModelLoad(alarms);
 
   return error;
+}
+
+const char * writeGeneralSettings()
+{
+  return writeFile(RADIO_SETTINGS_PATH, (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral));
 }
 
 const char * loadRadioSettings(const char * path)
@@ -165,12 +216,17 @@ const char * loadRadioSettings(const char * path)
     return error;
   }
 
+#if defined(TANGO_CONVERT_VERSION_101)
+  convertRadioData(version);
+  writeGeneralSettings();
+  TRACE("convert radio data to v1.1.0 success");
+#else
   if (version < EEPROM_VER) {
     convertRadioData(version);
   }
+#endif
 
   postRadioSettingsLoad();
-
   return nullptr;
 }
 
@@ -179,10 +235,6 @@ const char * loadRadioSettings()
   return loadRadioSettings(RADIO_SETTINGS_PATH);
 }
 
-const char * writeGeneralSettings()
-{
-  return writeFile(RADIO_SETTINGS_PATH, (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral));
-}
 
 void storageCheck(bool immediately)
 {
@@ -227,10 +279,12 @@ void storageReadAll()
 
   // Wipe models list in case
   // it's being reloaded after USB connection
+#if !defined(PCBTANGO)
   modelslist.clear();
 
   // and reload the list
   modelslist.load();
+#endif
 }
 
 void storageCreateModelsList()

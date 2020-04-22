@@ -91,13 +91,14 @@ void menuRadioHardware(event_t event)
 }
 #endif // PCBSKY9X
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined (PCBTANGO)
 enum {
   ITEM_RADIO_HARDWARE_LABEL_STICKS,
   ITEM_RADIO_HARDWARE_STICK1,
   ITEM_RADIO_HARDWARE_STICK2,
   ITEM_RADIO_HARDWARE_STICK3,
   ITEM_RADIO_HARDWARE_STICK4,
+#if NUM_POTS > 0
   ITEM_RADIO_HARDWARE_LABEL_POTS,
   ITEM_RADIO_HARDWARE_POT1,
 #if defined(HARDWARE_POT2)
@@ -108,6 +109,7 @@ enum {
 #endif
 #if defined(HARDWARE_POT4)
   ITEM_RADIO_HARDWARE_POT4,
+#endif
 #endif
 #if NUM_SLIDERS > 0
   ITEM_RADIO_HARDWARE_SLIDER1,
@@ -182,7 +184,9 @@ enum {
   ITEM_RADIO_HARDWARE_AUX_SERIAL_MODE,
 #endif
 
+#if !defined(PCBTANGO)
   ITEM_RADIO_HARDWARE_JITTER_FILTER,
+#endif
   ITEM_RADIO_HARDWARE_RAS,
   ITEM_RADIO_HARDWARE_DEBUG,
 #if defined(EEPROM_RLC)
@@ -255,7 +259,7 @@ void onHardwareAntennaSwitchConfirm(const char * result)
   #define SWITCH_TYPE_MAX(sw)            (sw == MIXSRC_SD-MIXSRC_FIRST_SWITCH ? SWITCH_2POS : SWITCH_3POS)
 #elif defined(PCBXLITES)
   #define SWITCH_TYPE_MAX(sw)            (sw >= MIXSRC_SE-MIXSRC_FIRST_SWITCH ? SWITCH_2POS : SWITCH_3POS)
-#elif defined(PCBXLITE)
+#elif defined(PCBXLITE) || defined(PCBTANGO)
   #define SWITCH_TYPE_MAX(sw)            (SWITCH_3POS)
 #elif defined(PCBX9E)
   #define SWITCH_TYPE_MAX(sw)            ((MIXSRC_SF - MIXSRC_FIRST_SWITCH == sw || MIXSRC_SH - MIXSRC_FIRST_SWITCH == sw) ? SWITCH_2POS : SWITCH_3POS)
@@ -279,6 +283,12 @@ void onHardwareAntennaSwitchConfirm(const char * result)
   #define MAX_BAUD_ROWS                  0,
 #else
   #define MAX_BAUD_ROWS
+#endif
+
+#if !defined(PCBTANGO)
+  #define ADC_FILTER                     0,
+#else
+  #define ADC_FILTER
 #endif
 
 #if defined(AUX_SERIAL)
@@ -315,10 +325,12 @@ void menuRadioHardware(event_t event)
       0 /* stick 2 */,
       0 /* stick 3 */,
       0 /* stick 4 */,
+#if NUM_POTS > 0
     LABEL(Pots),
-      POTS_ROWS,
+    POTS_ROWS,
+#endif
     LABEL(Switches),
-      SWITCHES_ROWS,
+    SWITCHES_ROWS,
 
     0 /* battery calib */,
     RTC_ROW
@@ -332,7 +344,7 @@ void menuRadioHardware(event_t event)
 
     AUX_SERIAL_ROWS
 
-    0 /* ADC filter */,
+    ADC_FILTER
     READONLY_ROW /* RAS */,
 
     1 /* debugs */,
@@ -387,7 +399,7 @@ void menuRadioHardware(event_t event)
       case ITEM_RADIO_HARDWARE_STICK4:
         editStickHardwareSettings(HW_SETTINGS_COLUMN1, y, k - ITEM_RADIO_HARDWARE_STICK1, event, attr);
         break;
-
+#if NUM_POTS > 0
       case ITEM_RADIO_HARDWARE_LABEL_POTS:
         lcdDrawTextAlignedLeft(y, STR_POTS);
         break;
@@ -417,7 +429,7 @@ void menuRadioHardware(event_t event)
         g_eeGeneral.potsConfig |= (potType << shift);
         break;
       }
-
+#endif
 #if NUM_SLIDERS > 0
       case ITEM_RADIO_HARDWARE_SLIDER1:
       case ITEM_RADIO_HARDWARE_SLIDER2:
@@ -494,7 +506,7 @@ void menuRadioHardware(event_t event)
       }
 
       case ITEM_RADIO_HARDWARE_BATTERY_CALIB:
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
         lcdDrawTextAlignedLeft(y, STR_BATT_CALIB);
         putsVolts(HW_SETTINGS_COLUMN2, y, getBatteryVoltage(), attr|PREC2|LEFT);
 #elif defined(PCBSKY9X)
@@ -610,9 +622,11 @@ void menuRadioHardware(event_t event)
         break;
 #endif
 
+#if !defined(PCBTANGO)
       case ITEM_RADIO_HARDWARE_JITTER_FILTER:
         g_eeGeneral.jitterFilter = 1 - editCheckBox(1 - g_eeGeneral.jitterFilter, HW_SETTINGS_COLUMN2, y, STR_JITTER_FILTER, attr, event);
         break;
+#endif
 
       case ITEM_RADIO_HARDWARE_RAS:
 #if defined(PCBX9LITE) && !defined(PCBX9LITES)
@@ -643,7 +657,7 @@ void menuRadioHardware(event_t event)
             pushMenu(menuRadioDiagKeys);
         }
         break;
-
+#if defined(EEPROM_RLC)
       case ITEM_RADIO_BACKUP_EEPROM:
         if (LCD_W < 212)
           lcdDrawText(LCD_W / 2, y, BUTTON(STR_EEBACKUP), attr | CENTERED);
@@ -665,6 +679,7 @@ void menuRadioHardware(event_t event)
           POPUP_CONFIRMATION(STR_CONFIRMRESET, onFactoryResetConfirm);
         }
         break;
+#endif
     }
   }
 }

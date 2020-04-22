@@ -22,6 +22,7 @@
 #define _LCD_H_
 
 #include <inttypes.h>
+#include "board.h"
 
 typedef int coord_t;
 typedef uint32_t LcdFlags;
@@ -38,7 +39,11 @@ typedef uint8_t display_t;
 #define LCD_LINES                      (LCD_H/FH)
 #define LCD_COLS                       (LCD_W/FW)
 
-#define BITMAP_BUFFER_SIZE(w, h)       (2 + (w) * (((h)+7)/8))
+#define COLOUR_MASK(x)                 ((x) & 0x0F0000)
+
+#if LCD_DEPTH > 1
+#define FILL_WHITE                     0x10
+#endif
 
 /* lcdDrawText flags */
 #define BLINK                          0x01
@@ -88,7 +93,13 @@ typedef uint8_t display_t;
 #define TIMEHOUR                     0x2000
 #define STREXPANDED                  0x4000
 
-#define DISPLAY_BUFFER_SIZE            (LCD_W*((LCD_H+7)/8))
+#if LCD_DEPTH == 4
+  #define DISPLAY_BUFFER_SIZE            (LCD_W*LCD_H*4/8)
+  #define BITMAP_BUFFER_SIZE(w, h)       (2 + (w) * (((h)+7)/8)*4)
+#else
+  #define DISPLAY_BUFFER_SIZE            (LCD_W*((LCD_H+7)/8))
+  #define BITMAP_BUFFER_SIZE(w, h)       (2 + (w) * (((h)+7)/8))
+#endif
 
 extern display_t displayBuf[DISPLAY_BUFFER_SIZE];
 extern coord_t lcdLastRightPos;
@@ -192,9 +203,14 @@ inline display_t getPixel(uint8_t x, uint8_t y)
     return 0;
   }
 
+#if LCD_DEPTH == 4
+  display_t * p = &displayBuf[(y * LCD_W >> 1) + (x >> 1)];
+  return (x & 1) ? (*p >> 4) : (*p & 0x0F);
+#else
   display_t pixel = displayBuf[(y / 8) * LCD_W + x];
   display_t mask = 1 << (y & 7);
   return ((pixel & mask) ? 0xf : 0);
+#endif
 }
 
 uint8_t getTextWidth(const char * s, uint8_t len=0, LcdFlags flags=0);

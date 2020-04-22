@@ -150,7 +150,7 @@ void setupPulsesSbus()
 
   // last byte, always 0x0
   sendByteSbus(0x00);
-
+#if !defined(PCBTANGO)
   putDsm2Flush();
-
+#endif
 }

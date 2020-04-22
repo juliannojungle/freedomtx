@@ -33,6 +33,11 @@ void onUSBConnectMenu(const char *result)
   else if (result == STR_USB_JOYSTICK) {
     setSelectedUsbMode(USB_JOYSTICK_MODE);
   }
+#if defined(PCBTANGO)
+  else if (result == STR_USB_AGENT) {
+    setSelectedUsbMode(USB_AGENT_MODE);
+  }
+#endif
   else if (result == STR_USB_SERIAL) {
     setSelectedUsbMode(USB_SERIAL_MODE);
   }
@@ -47,17 +52,34 @@ void handleUsbConnection()
     if (getSelectedUsbMode() == USB_MASS_STORAGE_MODE) {
       opentxClose(false);
       usbPluggedIn();
+#if defined(CROSSFIRE_TASK)
+      crossfireTasksStop();
+      ledOff();
+#endif
     }
   }
+#if defined(PCBTANGO)
+  static uint8_t usbFirstPluggedStage = 2;
+  if ((!usbStarted() && usbPlugged() && getSelectedUsbMode() == USB_UNSELECTED_MODE) ||
+          (usbFirstPluggedStage > 0 && usbPlugged() && getSelectedUsbMode() == USB_AGENT_MODE)) {
+      usbFirstPluggedStage = 1;
+#else
   if (!usbStarted() && usbPlugged() && getSelectedUsbMode() == USB_UNSELECTED_MODE) {
+#endif
     if (g_eeGeneral.USBMode == USB_UNSELECTED_MODE && popupMenuItemsCount == 0) {
       POPUP_MENU_ADD_ITEM(STR_USB_JOYSTICK);
+#if defined(PCBTANGO)
+      POPUP_MENU_ADD_ITEM(STR_USB_AGENT);
+#endif
       POPUP_MENU_ADD_ITEM(STR_USB_MASS_STORAGE);
 #if defined(DEBUG)
       POPUP_MENU_ADD_ITEM(STR_USB_SERIAL);
 #endif
       POPUP_MENU_START(onUSBConnectMenu);
     }
+#if defined(PCBTANGO)
+    usbFirstPluggedStage = 0;
+#endif
     if (g_eeGeneral.USBMode != USB_UNSELECTED_MODE) {
       setSelectedUsbMode(g_eeGeneral.USBMode);
     }
@@ -65,7 +87,12 @@ void handleUsbConnection()
   if (usbStarted() && !usbPlugged()) {
     usbStop();
     if (getSelectedUsbMode() == USB_MASS_STORAGE_MODE) {
+#if defined(PCBTANGO)
+      boardSetSkipWarning();
+      NVIC_SystemReset();
+#else
       opentxResume();
+#endif
     }
 #if !defined(BOOT)
     setSelectedUsbMode(USB_UNSELECTED_MODE);
@@ -490,7 +517,9 @@ void perMain()
 #if defined(PCBXLITES)
   handleJackConnection();
 #endif
+#if !defined(PCBTANGO) && !defined(SIMU)
   checkTrainerSettings();
+#endif
   periodicTick();
   DEBUG_TIMER_STOP(debugTimerPerMain1);
 
@@ -517,7 +546,7 @@ void perMain()
   }
 #endif
 
-#if !defined(EEPROM)
+#if !defined(EEPROM) && !defined(PCBTANGO)
   // In case the SD card is removed during the session
   if (!SD_CARD_PRESENT() && !globalData.unexpectedShutdown) {
     drawFatalErrorScreen(STR_NO_SDCARD);

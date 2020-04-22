@@ -343,7 +343,9 @@ inline void startPulses()
   setupPulsesInternalModule();
 #endif
 
+#if !defined(PCBTANGO)
   setupPulsesExternalModule();
+#endif
 
 #if defined(HARDWARE_EXTRA_MODULE)
   extramodulePpmStart();

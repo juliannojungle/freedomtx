@@ -180,7 +180,7 @@ void enablePulsesExternalModule(uint8_t protocol)
       break;
 #endif
 
-#if defined(CROSSFIRE)
+#if defined(CROSSFIRE) && !defined(PCBTANGO)
     case PROTOCOL_CHANNELS_CROSSFIRE:
       EXTERNAL_MODULE_ON();
       break;
@@ -262,7 +262,9 @@ void setupPulsesExternalModule(uint8_t protocol)
 
 #if defined(CROSSFIRE)
     case PROTOCOL_CHANNELS_CROSSFIRE:
+#if !defined(PCBTANGO)
       setupPulsesCrossfire();
+#endif
       scheduleNextMixerCalculation(EXTERNAL_MODULE, CROSSFIRE_PERIOD);
       break;
 #endif
@@ -401,7 +403,9 @@ bool setupPulsesExternalModule()
   heartbeat |= (HEART_TIMER_PULSES << EXTERNAL_MODULE);
 
   if (moduleState[EXTERNAL_MODULE].protocol != protocol) {
+#if !defined (PCBTANGO)
     extmoduleStop();
+#endif
     moduleState[EXTERNAL_MODULE].protocol = protocol;
     enablePulsesExternalModule(protocol);
     return false;

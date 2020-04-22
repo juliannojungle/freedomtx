@@ -49,6 +49,11 @@ extern RTOS_FLAG_HANDLE openTxInitCompleteFlag;
 void stackPaint();
 void tasksStart();
 
+#if defined(CROSSFIRE_TASK) && !defined(SIMU)
+void crossfireTasksStop();
+void crossfireTasksCreate();
+#endif
+
 extern volatile uint16_t timeForcePowerOffPressed;
 inline void resetForcePowerOffRequest()
 {

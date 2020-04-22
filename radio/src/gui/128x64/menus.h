@@ -24,7 +24,7 @@
 #include "keys.h"
 #include "common/stdlcd/menus.h"
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
 #define NAVIGATION_LINE_BY_LINE        0x40
 #define IS_LINE_SELECTED(sub, k)       ((sub)==(k) && menuHorizontalPosition < 0)
 #else
@@ -52,11 +52,13 @@ enum MenuRadioIndexes
 {
   MENU_RADIO_SETUP,
   CASE_SDCARD(MENU_RADIO_SD_MANAGER)
-#if defined(LUA) || defined(PXX2) || defined(MULTIMODULE)
+#if !defined(PCBTANGO) && (defined(LUA) || defined(PXX2) || defined(MULTIMODULE))
   MENU_RADIO_TOOLS,
 #endif
   MENU_RADIO_SPECIAL_FUNCTIONS,
+#if !defined(PCBTANGO)
   MENU_RADIO_TRAINER,
+#endif
   MENU_RADIO_HARDWARE,
   MENU_RADIO_VERSION,
   MENU_RADIO_PAGES_COUNT
@@ -78,17 +80,23 @@ void menuRadioCalibration(event_t event);
 static const MenuHandlerFunc menuTabGeneral[MENU_RADIO_PAGES_COUNT]  = {
   menuRadioSetup,
   CASE_SDCARD(menuRadioSdManager)
-#if defined(LUA) || defined(PXX2) || defined(MULTIMODULE)
+#if !defined(PCBTANGO) && (defined(LUA) || defined(PXX2) || defined(MULTIMODULE))
   menuRadioTools,
 #endif
   menuRadioSpecialFunctions,
+#if !defined(PCBTANGO)
   menuRadioTrainer,
+#endif
   menuRadioHardware,
   menuRadioVersion
 };
 
 enum MenuModelIndexes {
+#if defined(PCBTANGO)
+  MENU_MODEL_CROSSFIRE,
+#else
   MENU_MODEL_SELECT,
+#endif
   MENU_MODEL_SETUP,
   CASE_HELI(MENU_MODEL_HELI)
   CASE_FLIGHT_MODES(MENU_MODEL_FLIGHT_MODES)
@@ -107,6 +115,9 @@ enum MenuModelIndexes {
 };
 
 void menuModelSelect(event_t event);
+#if defined(PCBTANGO)
+void menuCrossfireSetup(event_t event);
+#endif
 void menuModelSetup(event_t event);
 void menuModelFailsafe(event_t event);
 void menuModelModuleOptions(event_t event);
@@ -131,7 +142,11 @@ void menuModelTemplates(event_t event);
 void menuModelGVarOne(event_t event);
 
 static const MenuHandlerFunc menuTabModel[]  = {
+#if defined(PCBTANGO)
+  menuCrossfireSetup,
+#else
   menuModelSelect,
+#endif
   menuModelSetup,
   CASE_HELI(menuModelHeli)
   CASE_FLIGHT_MODES(menuModelFlightModesAll)

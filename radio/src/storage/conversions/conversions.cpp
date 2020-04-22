@@ -21,8 +21,19 @@
 #include "opentx.h"
 #include "conversions.h"
 
+
 void convertRadioData(int version)
 {
+#if defined(PCBTANGO)
+  #if EEPROM_CONVERSIONS < EEPROM_VER
+    if (version == MODEL_EEPROM_VER_101)
+    {
+      convertRadioData_101_to_110(g_eeGeneral);
+    }
+    return;
+  #endif
+#endif
+
   TRACE("convertRadioData(%d)", version);
 
 #if EEPROM_CONVERSIONS < 217
@@ -49,6 +60,16 @@ void convertRadioData(int version)
 
 void convertModelData(int version)
 {
+#if defined(PCBTANGO)
+  #if EEPROM_CONVERSIONS < EEPROM_VER
+    if (version == MODEL_EEPROM_VER_101)
+    {
+      convertModelData_101_to_110(g_model);
+    }
+    return;
+  #endif
+#endif
+
   TRACE("convertModelData(%d)", version);
 
 #if EEPROM_CONVERSIONS < 217

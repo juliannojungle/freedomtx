@@ -54,10 +54,18 @@
   * @{
   */
 
-#define USBD_VID                            0x0483
+#if !defined(PCBTANGO)
+  #define USBD_VID                          0x0483
+#else
+  #define USBD_VID                          0x04d8
+#endif
 
 #define USBD_LANGID_STRING                  0x409
-#define USBD_MANUFACTURER_STRING            "FrSky"
+#if !defined(PCBTANGO)
+  #define USBD_MANUFACTURER_STRING          "FrSky"
+#else
+  #define USBD_MANUFACTURER_STRING          "Team-BlackSheep"
+#endif
 #define USBD_SERIALNUMBER_FS_STRING         "00000000001B"
 
 
@@ -75,6 +83,11 @@
 #define USBD_HID_PRODUCT_FS_STRING          USB_NAME " Joystick"
 #define USBD_HID_CONFIGURATION_FS_STRING    "HID Config"
 #define USBD_HID_INTERFACE_FS_STRING        "HID Interface"
+
+#define USBD_AGENT_PID                       0xf94c
+#define USBD_AGENT_PRODUCT_FS_STRING         USB_NAME " Tango II"
+#define USBD_AGENT_CONFIGURATION_FS_STRING   "HID Config"
+#define USBD_AGENT_INTERFACE_FS_STRING       "HID Interface"
 
 #define USBD_CDC_PID                        0x5740      // do not change, this ID is used by the ST USB driver for Windows
 #define USBD_CDC_PRODUCT_FS_STRING          USB_NAME " Serial Port"
@@ -134,6 +147,11 @@ uint8_t *  USBD_USR_DeviceDescriptor( uint8_t speed , uint16_t *length)
     case USB_JOYSTICK_MODE:
       pid = USBD_HID_PID;
       break;
+#if defined(PCBTANGO)
+    case USB_AGENT_MODE:
+      pid = USBD_AGENT_PID;
+      break;
+#endif
     case USB_SERIAL_MODE:
       pid = USBD_CDC_PID;
       break;
@@ -198,6 +216,11 @@ uint8_t *  USBD_USR_ProductStrDescriptor( uint8_t speed , uint16_t *length)
     case USB_JOYSTICK_MODE:
       USBD_GetString ((uint8_t*)USBD_HID_PRODUCT_FS_STRING, USBD_StrDesc, length);
       break;
+#if defined(PCBTANGO)
+    case USB_AGENT_MODE:
+      USBD_GetString ((uint8_t*)USBD_AGENT_PRODUCT_FS_STRING, USBD_StrDesc, length);
+      break;
+#endif
     case USB_SERIAL_MODE:
       USBD_GetString ((uint8_t*)USBD_CDC_PRODUCT_FS_STRING, USBD_StrDesc, length);
       break;
@@ -248,6 +271,11 @@ uint8_t *  USBD_USR_ConfigStrDescriptor( uint8_t speed , uint16_t *length)
     case USB_JOYSTICK_MODE:
       USBD_GetString ((uint8_t*)USBD_HID_CONFIGURATION_FS_STRING, USBD_StrDesc, length);
       break;
+#if defined(PCBTANGO)
+    case USB_AGENT_MODE:
+      USBD_GetString ((uint8_t*)USBD_AGENT_CONFIGURATION_FS_STRING, USBD_StrDesc, length);
+      break;
+#endif
     case USB_SERIAL_MODE:
       USBD_GetString ((uint8_t*)USBD_CDC_CONFIGURATION_FS_STRING, USBD_StrDesc, length);
       break;
@@ -272,6 +300,11 @@ uint8_t *  USBD_USR_InterfaceStrDescriptor( uint8_t speed , uint16_t *length)
     case USB_JOYSTICK_MODE:
       USBD_GetString ((uint8_t*)USBD_HID_INTERFACE_FS_STRING, USBD_StrDesc, length);
       break;
+#if defined(PCBTANGO)
+    case USB_AGENT_MODE:
+      USBD_GetString ((uint8_t*)USBD_AGENT_INTERFACE_FS_STRING, USBD_StrDesc, length);
+      break;
+#endif
     case USB_SERIAL_MODE:
       USBD_GetString ((uint8_t*)USBD_CDC_INTERFACE_FS_STRING, USBD_StrDesc, length);
       break;

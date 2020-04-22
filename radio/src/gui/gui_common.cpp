@@ -20,7 +20,7 @@
 
 #include "opentx.h"
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
 uint8_t switchToMix(uint8_t source)
 {
   div_t qr = div(source-1, 3);
@@ -173,10 +173,11 @@ bool isSourceAvailable(int source)
   if (source >= MIXSRC_FIRST_LUA && source <= MIXSRC_LAST_LUA)
     return false;
 #endif
-
+#if !defined(PCBTANGO)
   if (source >= MIXSRC_FIRST_POT && source <= MIXSRC_LAST_POT) {
     return IS_POT_SLIDER_AVAILABLE(POT1+source - MIXSRC_FIRST_POT);
   }
+#endif
 
 #if defined(PCBX10)
   if (source >= MIXSRC_MOUSE1 && source <= MIXSRC_MOUSE2)
@@ -473,6 +474,11 @@ bool isAssignableFunctionAvailable(int function)
 #endif
     case FUNC_RESERVE5:
       return false;
+#if defined(PCBTANGO)
+    case FUNC_TRAINER:
+    case FUNC_SET_FAILSAFE:
+      return false;
+#endif
 
     default:
       return true;

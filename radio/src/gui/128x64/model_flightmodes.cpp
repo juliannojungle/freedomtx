@@ -64,7 +64,7 @@ void menuModelFlightModeOne(event_t event)
   drawFlightMode(13*FW, 0, s_currIdx+1, (getFlightMode()==s_currIdx ? BOLD : 0));
 
 #if defined(GVARS) && !defined(GVARS_IN_CURVES_SCREEN)
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
   #define VERTICAL_SHIFT  (ITEM_MODEL_FLIGHT_MODE_FADE_IN-ITEM_MODEL_FLIGHT_MODE_TRIMS)
   static const uint8_t mstate_tab_fm1[]  = {0, 3, 0, 0, (uint8_t)-1, 1, 1, 1, 1, 1, 1};
 #else
@@ -172,7 +172,7 @@ void menuModelFlightModeOne(event_t event)
   }
 }
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
   #define NAME_POS                     20
   #define SWITCH_POS                   59
   #define TRIMS_POS                    79
@@ -195,7 +195,7 @@ void menuModelFlightModesAll(event_t event)
         trimsCheckTimer = 200; // 2 seconds
       }
       // no break
-#if !defined(PCBX7)
+#if !defined(PCBX7) && !defined(PCBTANGO)
     case EVT_KEY_FIRST(KEY_RIGHT):
 #endif
       if (sub >= 0 && sub < MAX_FLIGHT_MODES) {
@@ -207,19 +207,23 @@ void menuModelFlightModesAll(event_t event)
 
   uint8_t att;
   for (uint8_t i=0; i<MAX_FLIGHT_MODES; i++) {
+#if defined(PCBTANGO)
+    int8_t y = 1 + (1+i-menuVerticalOffset)*FH + i;
+#else
     int8_t y = 1 + (1+i-menuVerticalOffset)*FH;
+#endif
     if (y<1*FH+1 || y>(LCD_LINES-1)*FH+1) continue;
     att = (i==sub ? INVERS : 0);
     FlightModeData * p = flightModeAddress(i);
     drawFlightMode(0, y, i+1, att|(getFlightMode()==i ? BOLD : 0));
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
     lcdDrawSizedText(NAME_POS, y, p->name, sizeof(p->name), ZCHAR);
 #else
     lcdDrawSizedText(4*FW+NAME_OFS, y, p->name, sizeof(p->name), ZCHAR);
 #endif
     if (i == 0) {
       for (uint8_t t=0; t<NUM_STICKS; t++) {
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
         drawTrimMode(TRIMS_POS+t*FW*2, y, i, t, 0);
 #else
         drawShortTrimMode((9+LEN_FLIGHT_MODE_NAME+t)*FW+TRIMS_OFS, y, i, t, 0);
@@ -227,7 +231,7 @@ void menuModelFlightModesAll(event_t event)
       }
     }
     else {
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
       drawSwitch(SWITCH_POS, y, p->swtch, 0);
       for (uint8_t t=0; t<NUM_STICKS; t++) {
         drawTrimMode(TRIMS_POS+t*FW*2, y, i, t, 0);
@@ -245,7 +249,9 @@ void menuModelFlightModesAll(event_t event)
     }
   }
 
+#if !defined(PCBTANGO)
   if (menuVerticalOffset != MAX_FLIGHT_MODES-(LCD_LINES-2)) return;
+#endif
 
   lcdDrawTextAlignedLeft((LCD_LINES-1)*FH+1, STR_CHECKTRIMS);
   drawFlightMode(OFS_CHECKTRIMS, (LCD_LINES-1)*FH+1, mixerCurrentFlightMode+1);

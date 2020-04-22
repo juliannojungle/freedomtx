@@ -163,6 +163,7 @@ void logTelemetryWriteByte(uint8_t data);
 #define LOG_TELEMETRY_WRITE_START()
 #define LOG_TELEMETRY_WRITE_BYTE(data)
 #endif
+#define TELEMETRY_OUTPUT_BUFFER_SIZE  64
 
 class OutputTelemetryBuffer {
   public:
@@ -204,7 +205,8 @@ class OutputTelemetryBuffer {
 
     void pushByte(uint8_t byte)
     {
-      data[size++] = byte;
+      if (size < TELEMETRY_OUTPUT_BUFFER_SIZE)
+        data[size++] = byte;
     }
 
     void pushByteWithBytestuffing(uint8_t byte)
@@ -236,14 +238,30 @@ class OutputTelemetryBuffer {
   public:
     union {
       SportTelemetryPacket sport;
-      uint8_t data[16];
+      uint8_t data[TELEMETRY_OUTPUT_BUFFER_SIZE];
     };
     uint8_t size;
     uint8_t timeout;
     uint8_t destination;
 };
 
-extern OutputTelemetryBuffer outputTelemetryBuffer __DMA;
+#if defined(PCBTANGO)
+  extern uint8_t outputTelemetryBuffer[TELEMETRY_OUTPUT_BUFFER_SIZE] __DMA;
+  extern uint8_t outputTelemetryBufferSize;
+  extern uint8_t outputTelemetryBufferTrigger;
+  inline void telemetryOutputPushByte(uint8_t byte)
+  {
+    outputTelemetryBuffer[outputTelemetryBufferSize++] = byte;
+  }
+
+  inline void telemetryOutputSetTrigger(uint8_t byte)
+  {
+    outputTelemetryBufferTrigger = byte;
+  }
+#else
+  extern OutputTelemetryBuffer outputTelemetryBuffer __DMA;
+#endif
+
 
 #if defined(LUA)
 #define LUA_TELEMETRY_INPUT_FIFO_SIZE  256

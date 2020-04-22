@@ -29,6 +29,14 @@ RTOS_DEFINE_STACK(mixerStack, MIXER_STACK_SIZE);
 RTOS_TASK_HANDLE audioTaskId;
 RTOS_DEFINE_STACK(audioStack, AUDIO_STACK_SIZE);
 
+#if defined(PCBTANGO)
+RTOS_TASK_HANDLE crossfireTaskId;
+RTOS_DEFINE_STACK(crossfireStack, CROSSFIRE_STACK_SIZE);
+
+RTOS_TASK_HANDLE systemTaskId;
+RTOS_DEFINE_STACK(systemStack, SYSTEM_STACK_SIZE);
+#endif
+
 RTOS_MUTEX_HANDLE audioMutex;
 RTOS_MUTEX_HANDLE mixerMutex;
 
@@ -80,6 +88,8 @@ bool isModuleSynchronous(uint8_t module)
     return true;
 #if defined(INTMODULE_USART) || defined(EXTMODULE_USART)
   if (protocol == PROTOCOL_CHANNELS_PXX1_SERIAL)
+    return true;
+#elif defined(PCBTANGO)
     return true;
 #endif
   return false;
@@ -136,6 +146,13 @@ TASK_FUNCTION(mixerTask)
     uint32_t now = RTOS_GET_MS();
     bool run = false;
 
+#if defined(PCBTANGO) && !defined(SIMU)
+    if (isMixerTaskScheduled()) {
+      clearMixerTaskSchedule();
+      run = true;
+    }
+#endif
+
     if (now - lastRunTime >= 10) {
       // run at least every 10ms
       run = true;
@@ -178,6 +195,9 @@ TASK_FUNCTION(mixerTask)
       if (getSelectedUsbMode() == USB_JOYSTICK_MODE) {
         usbJoystickUpdate();
       }
+#if defined(PCBTANGO)
+      tangoUpdateChannel();
+#endif
 #endif
 
 #if defined(PCBSKY9X) && !defined(SIMU)
@@ -265,6 +285,18 @@ TASK_FUNCTION(menusTask)
     resetForcePowerOffRequest();
   }
 
+#if defined(PCBTANGO) && defined(LIBCRSF_ENABLE_OPENTX_RELATED) && defined(LIBCRSF_ENABLE_SD)
+  if((*(uint32_t *)CROSSFIRE_TASK_ADDRESS != 0xFFFFFFFF) &&
+    getSelectedUsbMode() != USB_MASS_STORAGE_MODE && sdMounted()){
+    set_crsf_flag( CRSF_FLAG_EEPROM_SAVE );
+    uint32_t time = get_tmr10ms();
+    while( get_crsf_flag( CRSF_FLAG_EEPROM_SAVE ) && get_tmr10ms() - time <= 100 ){
+      // with 1s timeout
+      RTOS_WAIT_TICKS(1);
+    }
+  }
+#endif
+
 #if defined(PCBX9E)
   toplcdOff();
 #endif
@@ -276,9 +308,84 @@ TASK_FUNCTION(menusTask)
   drawSleepBitmap();
   opentxClose();
   boardOff(); // Only turn power off if necessary
-
+  
   TASK_RETURN();
 }
+
+#if defined(CROSSFIRE_TASK) && !defined(SIMU)
+TASK_FUNCTION(systemTask)
+{
+  static uint32_t get_modelid_delay = 0;
+  set_model_id_needed = true;
+
+  while(1) {
+    if( get_crsf_flag( CRSF_FLAG_SHOW_BOOTLOADER_ICON )){
+      static uint32_t delayCount = 0;
+      if(delayCount == 0){
+        delayCount = RTOS_GET_TIME();
+        RTOS_DEL_TASK(menusTaskId);
+        lcdOn();
+        drawDownload();
+      }
+      if(RTOS_GET_TIME() - delayCount > 100){
+        NVIC_SystemReset();
+      }
+    }
+
+    crsfSharedFifoHandler();
+    crsfEspHandler();
+#if defined(AGENT) && !defined(SIMU)
+    AgentHandler();
+#endif
+    if (set_model_id_needed && g_model.header.modelId[EXTERNAL_MODULE] != 0) {
+      crsfSetModelID();
+      set_model_id_needed = false;
+      crsfGetModelID();
+      get_modelid_delay = get_tmr10ms();
+    }
+    if (get_modelid_delay && (get_tmr10ms() - get_modelid_delay) > 100) {
+      if (current_crsf_model_id == g_model.header.modelId[EXTERNAL_MODULE]) {
+        TRACE("Set model id for crossfire success, current id = %d\r\n", current_crsf_model_id);
+      }
+      else {
+        TRACE("Set model id for crossfire failed, current id = %d\r\n", current_crsf_model_id);
+      }
+      get_modelid_delay = 0;
+    }
+  }
+  TASK_RETURN();
+}
+
+void crossfireTasksCreate()
+{
+  RTOS_CREATE_TASK(crossfireTaskId, (FUNCPtr)CROSSFIRE_TASK_ADDRESS, "crossfire", crossfireStack, CROSSFIRE_STACK_SIZE, CROSSFIRE_TASK_PRIORITY);
+  RTOS_CREATE_TASK(systemTaskId, systemTask, "system", systemStack, SYSTEM_STACK_SIZE, RTOS_SYS_TASK_PRIORITY);
+}
+
+void crossfireTasksStart()
+{
+  uint8_t taskFlag[TASK_FLAG_MAX] = {0};
+  // Test if crossfire task is available and start it
+  if (*(uint32_t *)CROSSFIRE_TASK_ADDRESS != 0xFFFFFFFF ) {
+    crossfireTasksCreate();
+    RTOS_CREATE_FLAG( taskFlag[XF_TASK_FLAG] );
+    RTOS_CREATE_FLAG( taskFlag[CRSF_SD_TASK_FLAG] );
+    RTOS_CREATE_FLAG( taskFlag[BOOTLOADER_ICON_WAIT_FLAG] );
+
+    for( uint8_t i = 0; i < TASK_FLAG_MAX; i++ ){
+      crossfireSharedData.taskFlag[i] = taskFlag[i];
+    }
+  }
+}
+
+void crossfireTasksStop()
+{
+  NVIC_DisableIRQ(INTERRUPT_EXTI_IRQn);
+  NVIC_DisableIRQ(INTERRUPT_NOT_TIMER_IRQn);
+  RTOS_DEL_TASK(crossfireTaskId);
+  RTOS_DEL_TASK(systemTaskId);
+}
+#endif
 
 void tasksStart()
 {
@@ -290,6 +397,10 @@ void tasksStart()
 
   RTOS_CREATE_TASK(mixerTaskId, mixerTask, "mixer", mixerStack, MIXER_STACK_SIZE, MIXER_TASK_PRIO);
   RTOS_CREATE_TASK(menusTaskId, menusTask, "menus", menusStack, MENUS_STACK_SIZE, MENUS_TASK_PRIO);
+
+#if defined(CROSSFIRE_TASK) && !defined(SIMU)
+  crossfireTasksStart();
+#endif
 
 #if !defined(SIMU)
   RTOS_CREATE_TASK(audioTaskId, audioTask, "audio", audioStack, AUDIO_STACK_SIZE, AUDIO_TASK_PRIO);

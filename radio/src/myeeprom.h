@@ -23,10 +23,13 @@
 
 #include "datastructs.h"
 #include "bitfield.h"
-
+#if defined(PCBTANGO) && defined (TANGO_CONVERT_VERSION_101)
+#define EEPROM_VER             219
+#define FIRST_CONV_EEPROM_VER  101
+#else
 #define EEPROM_VER             219
 #define FIRST_CONV_EEPROM_VER  216
-
+#endif
 #define GET_MODULE_PPM_POLARITY(idx)             g_model.moduleData[idx].ppm.pulsePol
 #define GET_TRAINER_PPM_POLARITY()               g_model.trainerData.pulsePol
 #define GET_SBUS_POLARITY(idx)                   g_model.moduleData[idx].sbus.noninverted
@@ -78,7 +81,7 @@
 #define MODEL_GVAR_MIN(idx)            (CFN_GVAR_CST_MIN + g_model.gvars[idx].min)
 #define MODEL_GVAR_MAX(idx)            (CFN_GVAR_CST_MAX - g_model.gvars[idx].max)
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
   #define SWITCH_CONFIG(x)            (bfGet<swconfig_t>(g_eeGeneral.switchConfig, 2*(x), 2))
   #define SWITCH_EXISTS(x)            (SWITCH_CONFIG(x) != SWITCH_NONE)
   #define IS_CONFIG_3POS(x)           (SWITCH_CONFIG(x) == SWITCH_3POS)

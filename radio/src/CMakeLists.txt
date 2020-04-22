@@ -1,7 +1,7 @@
 include(CMakeForceCompiler)
 include(Bitmaps)
 
-set(PCB_TYPES X9LITE X9LITES X7 XLITE XLITES X9D X9D+ X9E X10 X12S SKY9X 9XRPRO AR9X)
+set(PCB_TYPES X9LITE X9LITES X7 XLITE XLITES X9D X9D+ X9E X10 X12S SKY9X 9XRPRO AR9X TANGO)
 set(GUI_LANGUAGES CZ DE EN ES FR IT PT SK SE PL HU NL)
 set(TTS_LANGUAGES CZ DE EN ES FR IT PT SK SE PL HU NL RU)
 
@@ -90,6 +90,8 @@ elseif(PCB STREQUAL X9E OR PCB STREQUAL X9D+ OR PCB STREQUAL X9D OR PCB STREQUAL
   include(targets/taranis/CMakeLists.txt)
 elseif(PCB STREQUAL SKY9X OR PCB STREQUAL 9XRPRO OR PCB STREQUAL AR9X)
   include(targets/sky9x/CMakeLists.txt)
+elseif(PCB STREQUAL TANGO)
+  include(targets/tango/CMakeLists.txt)
 else()
   message(FATAL_ERROR "Unknown PCB '${PCB}'")
 endif()
@@ -129,6 +131,7 @@ set(SRC ${SRC} debug.cpp)
 
 if(${EEPROM} STREQUAL SDCARD)
   set(SRC ${SRC} storage/storage_common.cpp storage/sdcard_raw.cpp storage/modelslist.cpp)
+  add_definitions(-DEEPROM_SDCARD)
 elseif(${EEPROM} STREQUAL EEPROM_RLC)
   set(SRC ${SRC} storage/storage_common.cpp storage/eeprom_common.cpp storage/eeprom_rlc.cpp)
   add_definitions(-DEEPROM -DEEPROM_RLC)
@@ -151,7 +154,11 @@ include(gui/CMakeLists.txt)
 if(RAMBACKUP)
   add_definitions(-DRAMBACKUP)
   set(SRC ${SRC} storage/rlc.cpp)
-  set(FIRMWARE_SRC ${FIRMWARE_SRC} storage/rambackup.cpp)
+  if(PCB STREQUAL TANGO)
+    set(SRC ${SRC} storage/rambackup.cpp)
+  else()
+    set(FIRMWARE_SRC ${FIRMWARE_SRC} storage/rambackup.cpp)
+  endif()
   set(GTEST_SRC ${GTEST_SRC} ${RADIO_SRC_DIRECTORY}/storage/rambackup.cpp)
 endif()
 
@@ -350,8 +357,14 @@ set(SRC
   mixer.cpp
   stamp.cpp
   timers.cpp
-  trainer.cpp
   )
+
+if (NOT PCB STREQUAL TANGO)
+  set(SRC
+    ${SRC}
+    trainer.cpp
+    )
+endif()
 
 if(GUI)
   add_definitions(-DGUI)

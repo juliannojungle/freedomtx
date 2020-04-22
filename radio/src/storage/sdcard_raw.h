@@ -38,9 +38,17 @@ const char * createModel();
 const char * loadRadioSettings(const char * path);
 const char * loadRadioSettings();
 
+#if defined(EEPROM_SDCARD)
+extern ModelHeader modelHeaders[MAX_MODELS];
+#endif
+
 PACK(struct RamBackup {
   uint16_t size;
+#if defined(PCBTANGO)
+  uint8_t data[2044];
+#else
   uint8_t data[4094];
+#endif
 });
 
 extern RamBackup * ramBackup;

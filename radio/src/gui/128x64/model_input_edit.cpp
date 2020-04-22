@@ -33,13 +33,21 @@ int expoFn(int x)
 
 void drawFunction(FnFuncP fn, uint8_t offset)
 {
+#if defined(PCBTANGO)
+  lcdDrawVerticalLine(CURVE_CENTER_X-offset, CURVE_CENTER_Y-CURVE_SIDE_WIDTH, CURVE_SIDE_WIDTH*2, 0xee);
+#else
   lcdDrawVerticalLine(CURVE_CENTER_X-offset, 0/*TODO CURVE_CENTER_Y-CURVE_SIDE_WIDTH*/, CURVE_SIDE_WIDTH*2, 0xee);
+#endif
   lcdDrawHorizontalLine(CURVE_CENTER_X-CURVE_SIDE_WIDTH-offset, CURVE_CENTER_Y, CURVE_SIDE_WIDTH*2, 0xee);
 
   coord_t prev_yv = (coord_t)-1;
 
   for (int xv=-CURVE_SIDE_WIDTH; xv<=CURVE_SIDE_WIDTH; xv++) {
+#if defined(PCBTANGO)
+    coord_t yv = (CURVE_LCD_H-1) - (((uint16_t)RESX + fn(xv * (RESX/CURVE_SIDE_WIDTH))) / 2 * (CURVE_LCD_H-1) / RESX) + (LCD_H - CURVE_LCD_H) / 2;
+#else
     coord_t yv = (LCD_H-1) - (((uint16_t)RESX + fn(xv * (RESX/CURVE_SIDE_WIDTH))) / 2 * (LCD_H-1) / RESX);
+#endif
     if (prev_yv != (coord_t)-1) {
       if (abs((int8_t)yv-prev_yv) <= 1) {
         lcdDrawPoint(CURVE_CENTER_X+xv-offset-1, prev_yv, FORCE);
@@ -166,16 +174,26 @@ void menuModelExpoOne(event_t event)
     if (ed->scale > 0) x512 = (x512 * 1024) / convertTelemValue(ed->srcRaw - MIXSRC_FIRST_TELEM + 1, ed->scale);
   }
   else {
+#if defined(PCBTANGO)
+    lcdDrawNumber(LCD_W-FW, 6*FH + (LCD_H - CURVE_LCD_H) / 2, calcRESXto1000(x512), RIGHT | PREC1);
+#else
     lcdDrawNumber(LCD_W-FW, 6*FH, calcRESXto1000(x512), RIGHT | PREC1);
+#endif
   }
   x512 = limit(-1024, x512, 1024);
   int y512 = expoFn(x512);
   y512 = limit(-1024, y512, 1024);
+#if defined(PCBTANGO)
+  lcdDrawNumber(CURVE_CENTER_X-FWNUM, 1*FH + (LCD_H - CURVE_LCD_H) / 2, calcRESXto1000(y512), RIGHT | PREC1);
+#else
   lcdDrawNumber(CURVE_CENTER_X-FWNUM, 1*FH, calcRESXto1000(y512), RIGHT | PREC1);
-
+#endif
   x512 = CURVE_CENTER_X+x512/(RESX/CURVE_SIDE_WIDTH);
+#if defined(PCBTANGO)
+  y512 = (CURVE_LCD_H-1) - ((y512+RESX)/2) * (CURVE_LCD_H-1) / RESX + (LCD_H - CURVE_LCD_H) / 2;
+#else
   y512 = (LCD_H-1) - ((y512+RESX)/2) * (LCD_H-1) / RESX;
-
+#endif
   lcdDrawSolidVerticalLine(x512, y512-3, 3*2+1);
   lcdDrawSolidHorizontalLine(x512-3, y512, 3*2+1);
 }

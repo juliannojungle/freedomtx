@@ -238,7 +238,7 @@
 
 #include "debug.h"
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
   #define SWSRC_THR                    SWSRC_SB2
   #define SWSRC_GEA                    SWSRC_SG2
   #define SWSRC_ID0                    SWSRC_SA0
@@ -290,6 +290,12 @@ void memswap(void * a, void * b, uint8_t size);
   #define pwrOffPressed()              pwrPressed()
 #else
   #define pwrOffPressed()              (!pwrPressed())
+#endif
+
+#if defined(PCBTANGO)
+  #define PWR_PRESS_SHUTDOWN_THRESHOD    300 // 3s
+#else
+  #define PWR_PRESS_SHUTDOWN_THRESHOD    0   // 0s
 #endif
 
 #define GET_LOWRES_POT_POSITION(i)     (getValue(MIXSRC_FIRST_POT+(i)) >> 4)
@@ -376,7 +382,7 @@ inline bool SPLASH_NEEDED()
 
 #if defined(PCBHORUS)
   #define SPLASH_TIMEOUT               0 /* we use the splash duration to load stuff from the SD */
-#elif defined(PCBTARANIS)
+#elif defined(PCBTARANIS) || defined(PCBTANGO)
   #define SPLASH_TIMEOUT               (g_eeGeneral.splashMode == -4 ? 1500 : (g_eeGeneral.splashMode <= 0 ? (400-g_eeGeneral.splashMode * 200) : (400 - g_eeGeneral.splashMode * 100)))
 #else
   #define SPLASH_TIMEOUT               (4 * 100)  // 4 seconds
@@ -439,7 +445,7 @@ bool cmpStrWithZchar(const char * charString, const char * zcharString, int size
 #include "keys.h"
 #include "pwr.h"
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
 div_t switchInfo(int switchPosition);
 extern uint8_t potsPos[NUM_XPOTS];
 #endif
@@ -454,6 +460,9 @@ void alert(const char * title, const char * msg, uint8_t sound);
 #if !defined(GUI)
   #define RAISE_ALERT(...)
   #define ALERT(...)
+#elif defined(PCBTANGO) && !defined (SIMU)
+  #define RAISE_ALERT(title, msg, info, sound) do{ if(getBoardOffState()){ return; }else{ showAlertBox(title, msg, info, sound); }}while(0)
+  #define ALERT(title, msg, sound) alert(title, msg, sound)
 #else
   inline void RAISE_ALERT(const char * title, const char * msg, const char * info, uint8_t sound)
   {
@@ -509,7 +518,7 @@ void evalLogicalSwitches(bool isCurrentFlightmode=true);
 void logicalSwitchesCopyState(uint8_t src, uint8_t dst);
 #define LS_RECURSIVE_EVALUATION_RESET()
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
   void getSwitchesPosition(bool startup);
 #else
   #define getSwitchesPosition(...)
@@ -544,7 +553,7 @@ bool setTrimValue(uint8_t phase, uint8_t idx, int trim);
 
 #if defined(PCBSKY9X)
   #define ROTARY_ENCODER_GRANULARITY (2 << g_eeGeneral.rotarySteps)
-#elif defined(RADIO_T16)
+#elif defined(RADIO_T16) || defined(PCBTANGO)
   #define ROTARY_ENCODER_GRANULARITY (1)
 #else
   #define ROTARY_ENCODER_GRANULARITY (2)
@@ -980,6 +989,13 @@ enum AUDIO_SOUNDS {
   AU_STICK2_MIDDLE,
   AU_STICK3_MIDDLE,
   AU_STICK4_MIDDLE,
+#if defined(PCBTANGO)
+  AU_AILERON_TRIM,
+  AU_ELEVATOR_TRIM,
+  AU_THROTTLE_TRIM,
+  AU_RUDDER_TRIME,
+  AU_MAIN_MENU,
+#endif
 #if defined(PCBTARANIS) || defined(PCBHORUS)
   AU_POT1_MIDDLE,
   AU_POT2_MIDDLE,
@@ -1314,6 +1330,8 @@ void varioWakeup();
 
 #if defined(PCBTARANIS)
   extern const unsigned char logo_taranis[];
+#elif defined(PCBTANGO)
+  extern const unsigned char logo_tango[];
 #endif
 
 #if defined(STM32)
@@ -1398,6 +1416,10 @@ inline bool isAsteriskDisplayed()
 
   return globalData.unexpectedShutdown;
 }
+
+#if defined(CROSSFIRE)
+#include "./io/crsf/crossfire.h"
+#endif
 
 #if defined(ACCESS_LIB)
 #include "thirdparty/libACCESS/libAccess.h"

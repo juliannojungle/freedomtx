@@ -107,6 +107,17 @@ void per10ms()
 {
   g_tmr10ms++;
 
+#if defined(PCBTANGO) && !defined(SIMU)
+  // workaround to deal with faulty scheduler after entering USB MSD mode for Tango2
+  if (usbPlugged() && getSelectedUsbMode() == USB_MASS_STORAGE_MODE) {
+    WATCHDOG_SUSPEND(200);
+  }
+  else if (usbStarted() && !usbPlugged() && getSelectedUsbMode() == USB_MASS_STORAGE_MODE) {
+    boardSetSkipWarning();
+    NVIC_SystemReset();
+  }
+#endif
+
   if (watchdogTimeout) {
     watchdogTimeout -= 1;
     wdt_reset();  // Retrigger hardware watchdog
@@ -119,8 +130,9 @@ void per10ms()
 #endif
 
   if (trimsCheckTimer) trimsCheckTimer--;
+#if !defined(PCBTANGO)
   if (ppmInputValidityTimer) ppmInputValidityTimer--;
-
+#endif
   if (trimsDisplayTimer)
     trimsDisplayTimer--;
   else
@@ -167,7 +179,17 @@ void per10ms()
       if ((g_tmr10ms - lastEvent >= 10) || (cw == new_cw)) { // 100ms
 
         putEvent(new_cw ? EVT_ROTARY_RIGHT : EVT_ROTARY_LEFT);
-
+#if defined(PCBTANGO) && !defined(SIMU)
+        if (g_trimEditMode != EDIT_TRIM_DISABLED) {
+          uint8_t key = (g_trimEditMode - 1) * 2;
+          if (new_cw) {
+            g_trimState = 0x01 << key;
+          }
+          else {
+            g_trimState = 0x01 << (key + 1);
+          }
+        }
+#endif
         // rotary encoder navigation speed (acceleration) detection/calculation
         static uint32_t delay = 2*ROTENC_DELAY_MIDSPEED;
 
@@ -210,7 +232,9 @@ void per10ms()
   sdPoll10ms();
 #endif
 
+#if !defined(PCBTANGO)
   outputTelemetryBuffer.per10ms();
+#endif
 
   heartbeat |= HEART_TIMER_10MS;
 }
@@ -298,13 +322,29 @@ void generalDefault()
 #endif
 
   g_eeGeneral.backlightMode = e_backlight_mode_all;
-  g_eeGeneral.lightAutoOff = 2;
   g_eeGeneral.inactivityTimer = 10;
 
   g_eeGeneral.ttsLanguage[0] = 'e';
   g_eeGeneral.ttsLanguage[1] = 'n';
-  g_eeGeneral.wavVolume = 2;
-  g_eeGeneral.backgroundVolume = 1;
+  
+#if defined(PCBTANGO)
+  g_eeGeneral.wavVolume         = 1;
+  g_eeGeneral.backgroundVolume  = 0;
+  g_eeGeneral.beepMode          = 1;
+  g_eeGeneral.beepVolume        = -1;
+  g_eeGeneral.beepLength        = -1;
+  g_eeGeneral.speakerPitch      = 2;
+  g_eeGeneral.hapticLength      = -1;
+  g_eeGeneral.hapticMode        = 1;
+  g_eeGeneral.lightAutoOff      = 12;
+  g_eeGeneral.templateSetup     = 17; /* TAER */
+  g_eeGeneral.jitterFilter      = 0;
+  g_eeGeneral.txVoltageCalibration = BATT_CALIB_OFFSET;
+#else
+  g_eeGeneral.wavVolume         = 2;
+  g_eeGeneral.backgroundVolume  = 1;
+  g_eeGeneral.lightAutoOff      = 2;
+#endif
 
   for (int i=0; i<NUM_STICKS; ++i) {
     g_eeGeneral.trainer.mix[i].mode = 2;
@@ -482,7 +522,7 @@ void modelDefault(uint8_t id)
 
   memcpy(g_model.modelRegistrationID, g_eeGeneral.ownerRegistrationID, PXX2_LEN_REGISTRATION_ID);
 
-#if defined(LUA) && defined(PCBTARANIS) //Horus uses menuModelWizard() for wizard
+#if defined(LUA) && (defined(PCBTARANIS) || defined(PCBTANGO))//Horus uses menuModelWizard() for wizard
   if (isFileAvailable(WIZARD_PATH "/" WIZARD_NAME)) {
     f_chdir(WIZARD_PATH);
     luaExec(WIZARD_NAME);
@@ -530,6 +570,8 @@ void modelDefault(uint8_t id)
   for (int i=0; i<NUM_SWITCHES; i++) {
     g_model.switchWarningState |= (1 << (3*i));
   }
+#elif defined(PCBTANGO)
+  g_model.potsWarnMode = POTS_WARN_OFF;
 #endif
 }
 
@@ -672,7 +714,11 @@ bool inputsMoved()
 {
   uint8_t sum = 0;
   for (uint8_t i=0; i<NUM_STICKS+NUM_POTS+NUM_SLIDERS; i++)
+#if defined(PCBTANGO)
+    sum += ((int16_t)anaIn(i) + 4096) >> INAC_STICKS_SHIFT;
+#else
     sum += anaIn(i) >> INAC_STICKS_SHIFT;
+#endif
   for (uint8_t i=0; i<NUM_SWITCHES; i++)
     sum += getValue(MIXSRC_FIRST_SWITCH+i) >> INAC_SWITCHES_SHIFT;
 #if defined(GYRO)
@@ -784,7 +830,7 @@ void doSplash()
       }
 #endif
 
-#if defined(FRSKY_RELEASE)
+#if defined(FRSKY_RELEASE) || defined(TBS_RELEASE)
       static uint8_t secondSplash = false;
       if (!secondSplash && get_tmr10ms() >= tgtime-200) {
         secondSplash = true;
@@ -857,9 +903,11 @@ void checkMultiLowPower()
 static void checkRTCBattery()
 {
   if (isVBatBridgeEnabled()) {
+#if !defined(PCBTANGO)
     if (getRTCBatteryVoltage() < 200) {
       ALERT("BATTERY", STR_WARN_RTC_BATTERY_LOW, AU_ERROR);
     }
+#endif
     disableVBatBridge();
   }
 }
@@ -1214,6 +1262,10 @@ tmr10ms_t jitterResetTime = 0;
 #if !defined(SIMU)
 uint16_t anaIn(uint8_t chan)
 {
+#if defined(PCBTANGO)
+  if( chan <= STICK4 )
+    return crossfireSharedData.sticks[chan];
+#endif
   return ANA_FILT(chan);
 }
 
@@ -1273,7 +1325,13 @@ void getADC()
     //   * <out> = s_anaFilt[x]
     uint16_t previous = s_anaFilt[x] / JITTER_ALPHA;
     uint16_t diff = (v > previous) ? (v - previous) : (previous - v);
-    if (!g_eeGeneral.jitterFilter && diff < (10*ANALOG_MULTIPLIER)) { // g_eeGeneral.jitterFilter is inverted, 0 - active
+
+    // g_eeGeneral.jitterFilter is inverted, 0 - active
+#if defined(PCBTANGO)
+    if (x > STICK4 && !g_eeGeneral.jitterFilter && diff < (10*ANALOG_MULTIPLIER)) {
+#else    
+    if (!g_eeGeneral.jitterFilter && diff < (10*ANALOG_MULTIPLIER)) {
+#endif
       // apply jitter filter
       s_anaFilt[x] = (s_anaFilt[x] - previous) + v;
     }
@@ -1472,8 +1530,9 @@ void doMixerCalculations()
       s_cnt_1s += 1;
 
       logicalSwitchesTimerTick();
+#if !defined (PCBTANGO)
       checkTrainerSignalWarning();
-
+#endif
       if (s_cnt_1s >= 10) { // 1sec
         s_cnt_1s -= 10;
         sessionTimer += 1;
@@ -1826,7 +1885,11 @@ void opentxInit()
 #if defined(GUI)
   menuHandlers[0] = menuMainView;
   #if MENUS_LOCK != 2/*no menus*/
-    menuHandlers[1] = menuModelSelect;
+    #if !defined(PCBTANGO)
+      menuHandlers[1] = menuModelSelect;
+    #else
+      menuHandlers[1] = menuModelMixAll;
+    #endif
   #endif
 #endif
 
@@ -1836,7 +1899,7 @@ void opentxInit()
 
   BACKLIGHT_ENABLE(); // we start the backlight during the startup animation
 
-#if defined(STARTUP_ANIMATION)
+#if defined(STARTUP_ANIMATION) && !defined(PCBTANGO)
   if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE()) {
     pwrOn();
   }
@@ -1922,6 +1985,16 @@ void opentxInit()
   storageReadAll();
 #endif
 #endif  // #if !defined(EEPROM)
+
+#if defined(PCBTANGO)
+  // read the settings (especailly power on delay) from sdcard first then run the startup animation
+  if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE()) {
+    pwrOn();
+  }
+  else {
+    runStartupAnimation();
+  }
+#endif
 
 #if defined(AUX_SERIAL)
   auxSerialInit(g_eeGeneral.auxSerialMode, modelTelemetryProtocol());
@@ -2071,7 +2144,7 @@ uint32_t pwrCheck()
   if (pwr_check_state == PWR_CHECK_OFF) {
     return e_power_off;
   }
-  else if (pwrPressed()) {
+  else if (pwrPressed() && get_tmr10ms() > PWR_PRESS_SHUTDOWN_THRESHOD) {
     if (TELEMETRY_STREAMING()) {
       message = STR_MODEL_STILL_POWERED;
     }

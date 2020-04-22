@@ -28,7 +28,26 @@
 
 #define MENUS_SCROLLBAR_WIDTH          0
 
-#if defined(NAVIGATION_X7)
+#if defined(PCBTANGO)
+#define DEFAULT_SCROLLBAR_X            (LCD_W-1)
+#define NUM_BODY_LINES                 (LCD_LINES-1)
+#define MENU_HEADER_HEIGHT             FH
+#define CHECK_FLAG_NO_SCREEN_INDEX     1
+
+#if LCD_DEPTH > 1
+#define GREY(x)                        ((x) * 0x010000)
+#define WHITE                          GREY(0xf)
+#define GREY_DEFAULT                   GREY(11)
+#endif
+
+#if LCD_DEPTH > 1
+#define FILL_WHITE                     0x10
+#endif
+
+void menuChannelsView(event_t event);
+#endif
+
+#if defined(NAVIGATION_X7) || defined(PCBTANGO)
   #define HEADER_LINE                  0
   #define HEADER_LINE_COLUMNS
 #else
@@ -42,9 +61,16 @@
 #define NUM_BODY_LINES                 (LCD_LINES-1)
 #define MENU_HEADER_HEIGHT             FH
 
+#if defined(PCBTANGO)
+#define CURVE_LCD_H                    (64)
+#define CURVE_SIDE_WIDTH               (CURVE_LCD_H/2)
+#define CURVE_CENTER_X                 (LCD_W-CURVE_SIDE_WIDTH-2)
+#define CURVE_CENTER_Y                 (LCD_H/2)
+#else
 #define CURVE_SIDE_WIDTH               (LCD_H/2)
 #define CURVE_CENTER_X                 (LCD_W-CURVE_SIDE_WIDTH-2)
 #define CURVE_CENTER_Y                 (LCD_H/2)
+#endif
 
 #define MIXES_2ND_COLUMN               (12*FW)
 
@@ -76,6 +102,7 @@ extern int8_t s_editMode;       // global editmode
 #define INCDEC_SET_FLAG(f)           incdecFlag = (f)
 #define INCDEC_ENABLE_CHECK(fn)      isValueAvailable = fn
 #define CHECK_INCDEC_PARAM(event, var, min, max) checkIncDec(event, var, min, max, incdecFlag, isValueAvailable)
+
 
 struct CheckIncDecStops {
   const int count;
@@ -286,10 +313,14 @@ extern const unsigned char sticks[] ;
 void drawSplash();
 void drawSecondSplash();
 void drawScreenIndex(uint8_t index, uint8_t count, uint8_t attr);
+#if defined(PCBTANGO)
+void drawGauge(coord_t x, coord_t y, coord_t w, coord_t h, int32_t val, int32_t max);
+void drawDownload();
+#endif
 void drawStick(coord_t centrex, int16_t xval, int16_t yval);
 void drawPotsBars();
 void doMainScreenGraphics();
-
+void doMainScreenGraphicsDedicatedPoints( uint32_t ptr );
 void drawProgressScreen(const char * title, const char * message, int num, int den);
 void drawSleepBitmap();
 

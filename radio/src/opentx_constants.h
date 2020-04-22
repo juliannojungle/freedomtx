@@ -41,8 +41,21 @@ enum SliderConfig {
 };
 
 enum CalibrationState {
-  CALIB_START,
+  CALIB_START = 0,
+#if defined(PCBTANGO)
+  CALIB_SET_P0,
+  CALIB_SET_P1,
+  CALIB_SET_P2,
+  CALIB_SET_P3,
+  CALIB_SET_P4,
+  CALIB_SET_P5,
+  CALIB_SET_P6,
+  CALIB_SET_P7,
+  CALIB_SET_P8,
+  CALIB_CAL_POINTS,
+#else
   CALIB_SET_MIDPOINT,
+#endif
   CALIB_MOVE_STICKS,
   CALIB_STORE,
   CALIB_FINISHED

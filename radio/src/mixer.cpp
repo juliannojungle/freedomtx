@@ -157,8 +157,10 @@ void applyExpos(int16_t * anas, uint8_t mode, uint8_t ovwrIdx, int16_t ovwrValue
       continue;
     if (ed->flightModes & (1<<mixerCurrentFlightMode))
       continue;
+#if !defined (PCBTANGO)
     if (ed->srcRaw >= MIXSRC_FIRST_TRAINER && ed->srcRaw <= MIXSRC_LAST_TRAINER && !IS_TRAINER_INPUT_VALID())
       continue;
+#endif
     if (getSwitch(ed->swtch)) {
       int32_t v;
       if (ed->srcRaw == ovwrIdx) {
@@ -230,10 +232,11 @@ int16_t applyLimits(uint8_t channel, int32_t value)
     return calc100toRESX(safetyCh[channel]);
   }
 #endif
-
+#if !defined (PCBTANGO)
   if (isFunctionActive(FUNCTION_TRAINER_CHANNELS) && IS_TRAINER_INPUT_VALID()) {
     return ppmInput[channel] * 2;
   }
+#endif
 
   LimitData * lim = limitAddress(channel);
 
@@ -348,7 +351,7 @@ getvalue_t getValue(mixsrc_t i)
     return calc1000toRESX((int16_t)8 * getTrimValue(mixerCurrentFlightMode, i-MIXSRC_FIRST_TRIM));
   }
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO)
   else if (i >= MIXSRC_FIRST_SWITCH && i <= MIXSRC_LAST_SWITCH) {
     mixsrc_t sw = i - MIXSRC_FIRST_SWITCH;
     if (SWITCH_EXISTS(sw)) {
@@ -371,6 +374,7 @@ getvalue_t getValue(mixsrc_t i)
   else if (i <= MIXSRC_LAST_LOGICAL_SWITCH) {
     return getSwitch(SWSRC_FIRST_LOGICAL_SWITCH + i - MIXSRC_FIRST_LOGICAL_SWITCH) ? 1024 : -1024;
   }
+#if !defined(PCBTANGO)
   else if (i <= MIXSRC_LAST_TRAINER) {
     int16_t x = ppmInput[i - MIXSRC_FIRST_TRAINER];
     if (i < MIXSRC_FIRST_TRAINER + NUM_CAL_PPM) {
@@ -378,6 +382,7 @@ getvalue_t getValue(mixsrc_t i)
     }
     return x * 2;
   }
+#endif
   else if (i <= MIXSRC_LAST_CH) {
     return ex_chans[i - MIXSRC_CH1];
   }
@@ -472,7 +477,7 @@ void evalInputs(uint8_t mode)
       if (mode & e_perout_mode_nosticks) {
         v = 0;
       }
-
+#if !defined(PCBTANGO)
       if (mode <= e_perout_mode_inactive_flight_mode && isFunctionActive(FUNCTION_TRAINER_STICK1+ch) && IS_TRAINER_INPUT_VALID()) {
         // trainer mode
         TrainerMix* td = &g_eeGeneral.trainer.mix[ch];
@@ -493,6 +498,7 @@ void evalInputs(uint8_t mode)
           }
         }
       }
+#endif
       calibratedAnalogs[ch] = v;
     }
   }
@@ -658,10 +664,11 @@ void evalFlightModeMixes(uint8_t mode, uint8_t tick10ms)
       delayval_t mixEnabled = (!(md->flightModes & (1 << mixerCurrentFlightMode)) && getSwitch(md->swtch)) ? DELAY_POS_MARGIN+1 : 0;
 
 #define MIXER_LINE_DISABLE()   (mixCondition = true, mixEnabled = 0)
-
+#if !defined (PCBTANGO)
       if (mixEnabled && md->srcRaw >= MIXSRC_FIRST_TRAINER && md->srcRaw <= MIXSRC_LAST_TRAINER && !IS_TRAINER_INPUT_VALID()) {
         MIXER_LINE_DISABLE();
       }
+#endif
 
 #if defined(LUA_MODEL_SCRIPTS)
       // disable mixer if Lua script is used as source and script was killed

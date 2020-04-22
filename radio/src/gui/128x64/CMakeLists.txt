@@ -1,13 +1,11 @@
 set(GUI_SRC
   ${GUI_SRC}
-  lcd.cpp
   splash.cpp
   fonts.cpp
   popups.cpp
   widgets.cpp
   startup_shutdown.cpp
   menu_model.cpp
-  model_select.cpp
   model_setup.cpp
   model_failsafe.cpp
   model_logical_switches.cpp
@@ -21,6 +19,21 @@ set(GUI_SRC
   view_main.cpp
   view_statistics.cpp
   )
+
+if(PCB STREQUAL TANGO)
+  set(GUI_SRC
+    ${GUI_SRC}
+    lcd_4bits.cpp
+    model_select_tango.cpp
+    model_crossfire_setup.cpp
+    )
+else()
+  set(GUI_SRC
+    ${GUI_SRC}
+    lcd.cpp
+    model_select.cpp
+    )
+endif()
 
 if(FLIGHT_MODES)
   set(GUI_SRC

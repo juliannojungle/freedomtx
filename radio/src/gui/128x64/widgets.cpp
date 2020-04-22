@@ -22,7 +22,11 @@
 
 void drawStick(coord_t centrex, int16_t xval, int16_t yval)
 {
+#if defined(PCBTANGO)
+#define BOX_CENTERY   (LCD_H-22-BOX_WIDTH/2)
+#else
 #define BOX_CENTERY   (LCD_H-9-BOX_WIDTH/2)
+#endif
 #define MARKER_WIDTH  5
   lcdDrawSquare(centrex-BOX_WIDTH/2, BOX_CENTERY-BOX_WIDTH/2, BOX_WIDTH);
   lcdDrawSolidVerticalLine(centrex, BOX_CENTERY-1, 3);
@@ -64,6 +68,19 @@ void drawVerticalScrollbar(coord_t x, coord_t y, coord_t h, uint16_t offset, uin
     yhgt = h - yofs;
   lcdDrawVerticalLine(x, y + yofs, yhgt, SOLID, FORCE);
 }
+
+#if defined(PCBTANGO)
+void drawGauge(coord_t x, coord_t y, coord_t w, coord_t h, int32_t val, int32_t max)
+{
+  lcdDrawRect(x, y, w+1, h);
+  lcdDrawFilledRect(x+1, y+1, w-1, 4, SOLID, ERASE);
+  coord_t len = limit((uint8_t)1, uint8_t((abs(val) * w/2 + max/2) / max), uint8_t(w/2));
+  coord_t x0 = (val>0) ? x+w/2 : x+1+w/2-len;
+  for (coord_t i=h-2; i>0; i--) {
+    lcdDrawSolidHorizontalLine(x0, y+i, len);
+  }
+}
+#endif
 
 void title(const char * s)
 {

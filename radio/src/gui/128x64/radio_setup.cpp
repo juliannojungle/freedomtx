@@ -34,6 +34,12 @@ const unsigned char sticks[]  = {
   value = editChoice(RADIO_SETUP_2ND_COLUMN, y, label, nullptr, tmp, -2, +2, attr, event); \
 }
 
+#if defined(PCBTANGO)
+  #define CASE_CONTRAST(x)
+#else
+  #define CASE_CONTRAST(x) x,
+#endif
+
 #if defined(SPLASH)
   #define CASE_SPLASH_PARAM(x) x,
 #else
@@ -71,7 +77,7 @@ enum {
   CASE_GYRO(ITEM_RADIO_SETUP_GYRO_LABEL)
   CASE_GYRO(ITEM_RADIO_SETUP_GYRO_MAX)
   CASE_GYRO(ITEM_RADIO_SETUP_GYRO_OFFSET)
-  ITEM_RADIO_SETUP_CONTRAST,
+  CASE_CONTRAST(ITEM_RADIO_SETUP_CONTRAST)
   ITEM_RADIO_SETUP_ALARMS_LABEL,
   ITEM_RADIO_SETUP_BATTERY_WARNING,
   CASE_CAPACITY(ITEM_RADIO_SETUP_CAPACITY_WARNING)
@@ -151,7 +157,7 @@ void menuRadioSetup(event_t event)
     CASE_GYRO(LABEL(GYRO))
     CASE_GYRO(0)
     CASE_GYRO(0)
-    0, LABEL(ALARMS), 0, CASE_CAPACITY(0)
+    CASE_CONTRAST(0) LABEL(ALARMS), 0, CASE_CAPACITY(0)
     0, 0, 0, 0,
     LABEL(BACKLIGHT), 0, 0, 0, CASE_PWM_BACKLIGHT(0)
     CASE_PWM_BACKLIGHT(0)
@@ -251,9 +257,17 @@ void menuRadioSetup(event_t event)
         putsVolts(lcdLastRightPos+FW, y, 120+g_eeGeneral.vBatMax, (menuHorizontalPosition>0 ? attr : 0)|LEFT|NO_UNIT);
         if (attr && s_editMode>0) {
           if (menuHorizontalPosition==0)
+#if defined(PCBTANGO)
+            CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMin, -60, g_eeGeneral.vBatMax+29); // min=3.0V
+#else
             CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMin, -50, g_eeGeneral.vBatMax+29); // min=4.0V
+#endif
           else
+#if defined(PCBTANGO)
+            CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMax, g_eeGeneral.vBatMin-29, -60); // max=6.0V
+#else
             CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMax, g_eeGeneral.vBatMin-29, +40); // max=16.0V
+#endif
         }
         break;
 #endif
@@ -395,6 +409,7 @@ void menuRadioSetup(event_t event)
         break;
 #endif
 
+#if !defined(PCBTANGO)
       case ITEM_RADIO_SETUP_CONTRAST:
         lcdDrawTextAlignedLeft(y, STR_CONTRAST);
         lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.contrast, attr|LEFT);
@@ -403,6 +418,7 @@ void menuRadioSetup(event_t event)
           lcdSetContrast();
         }
         break;
+#endif
 
       case ITEM_RADIO_SETUP_ALARMS_LABEL:
         lcdDrawTextAlignedLeft(y, STR_ALARMS_LABEL);
@@ -456,6 +472,10 @@ void menuRadioSetup(event_t event)
 
       case ITEM_RADIO_SETUP_BACKLIGHT_MODE:
         g_eeGeneral.backlightMode = editChoice(RADIO_SETUP_2ND_COLUMN, y, INDENT TR_MODE, STR_VBLMODE, g_eeGeneral.backlightMode, e_backlight_mode_off, e_backlight_mode_on, attr, event);
+#if defined(PCBTANGO)
+        if(g_eeGeneral.backlightMode == e_backlight_mode_off)
+          g_eeGeneral.backlightMode = e_backlight_mode_keys;
+#endif
         break;
 
       case ITEM_RADIO_SETUP_FLASH_BEEP:
@@ -466,7 +486,11 @@ void menuRadioSetup(event_t event)
         lcdDrawTextAlignedLeft(y, STR_BLDELAY);
         lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.lightAutoOff*5, attr|LEFT);
         lcdDrawChar(lcdLastRightPos, y, 's');
+#if defined(BACKLIGHT_TIMEOUT_MIN)
+        if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.lightAutoOff, BACKLIGHT_TIMEOUT_MIN, 600/5);
+#else
         if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.lightAutoOff, 0, 600/5);
+#endif
         break;
 
       case ITEM_RADIO_SETUP_BRIGHTNESS:

@@ -150,7 +150,7 @@ uint8_t auxSerialTracesEnabled()
 #endif
 }
 
-#if !defined(SIMU)
+#if !defined(SIMU) && !defined(PCBTANGO)
 extern "C" void AUX_SERIAL_USART_IRQHandler(void)
 {
   DEBUG_INTERRUPT(INT_SER2);

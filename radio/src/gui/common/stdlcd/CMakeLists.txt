@@ -14,11 +14,18 @@ set(GUI_SRC
   ../common/stdlcd/model_curves.cpp
   ../common/stdlcd/radio_hardware.cpp
   ../common/stdlcd/radio_version.cpp
-  ../common/stdlcd/radio_trainer.cpp
   model_curve_edit.cpp
   )
 
-if(PXX2 OR LUA OR MULTIMODULE)
+if(NOT PCB STREQUAL TANGO)
+  set(GUI_SRC
+    ${GUI_SRC}
+    ../common/stdlcd/radio_trainer.cpp
+    )
+endif()
+
+
+if(NOT PCB STREQUAL TANGO AND (PXX2 OR LUA OR MULTIMODULE))
   set(GUI_SRC ${GUI_SRC} ../common/stdlcd/radio_tools.cpp)
 endif()
 

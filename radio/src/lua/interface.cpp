@@ -666,7 +666,7 @@ bool luaLoadFunctionScript(uint8_t index, uint8_t ref)
   return true;
 }
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
 bool luaLoadTelemetryScript(uint8_t index)
 {
   TelemetryScreenType screenType = TELEMETRY_SCREEN_TYPE(index);
@@ -727,7 +727,7 @@ void luaLoadPermanentScripts()
     }
   }
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
   // Load custom telemetry scripts
   for (int i=0; i<MAX_TELEMETRY_SCREENS; i++) {
     if (!luaLoadTelemetryScript(i)) {
@@ -861,6 +861,13 @@ void luaDoOneRunStandalone(event_t evt)
         }
         else if (luaDisplayStatistics) {
 #if defined(COLORLCD)
+#elif defined(PCBTANGO)
+          lcdDrawSolidHorizontalLine(0, 11*FH-1, lcdLastRightPos+6, ERASE);
+          lcdDrawText(0, 11*FH, "GV Use: ");
+          lcdDrawNumber(lcdLastRightPos, 11*FH, luaGetMemUsed(lsScripts), LEFT);
+          lcdDrawChar(lcdLastRightPos, 11*FH, 'b');
+          lcdDrawSolidHorizontalLine(0, 11*FH-2, lcdLastRightPos+6, FORCE);
+          lcdDrawVerticalLine(lcdLastRightPos+6, 11*FH-2, FH+2, SOLID, FORCE);
 #else
           lcdDrawSolidHorizontalLine(0, 7*FH-1, lcdLastRightPos+6, ERASE);
           lcdDrawText(0, 7*FH, "GV Use: ");
@@ -947,7 +954,7 @@ bool luaDoOneRunPermanentScript(event_t evt, int i, uint32_t scriptType)
       return false;
   }
   else {
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO)
 #if defined(SIMU) || defined(DEBUG)
     TelemetryScriptData & script = g_model.screens[sid.reference-SCRIPT_TELEMETRY_FIRST].script;
     filename = script.file;
