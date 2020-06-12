@@ -19,6 +19,7 @@
  */
 
 #include "opentx.h"
+#include "../../io/crsf/crsf_utilities.h"
 
 #if defined(__cplusplus) && !defined(SIMU)
 extern "C" {
@@ -47,16 +48,10 @@ void watchdogInit(unsigned int duration)
   IWDG->KR = 0x5555;      // Unlock registers
   IWDG->PR = 3;           // Divide by 32 => 1kHz clock
   IWDG->KR = 0x5555;      // Unlock registers
-  IWDG->RLR = duration;       // 1.5 seconds nominal
+  IWDG->RLR = duration;   // 1.5 seconds nominal
   IWDG->KR = 0xAAAA;      // reload
   IWDG->KR = 0xCCCC;      // start
 }
-
-#if defined(PWR_BUTTON_PRESS) && !defined(SIMU)
-  #define PWR_PRESS_DURATION_MIN        100 // 1s
-  #define PWR_PRESS_DURATION_MAX        500 // 5s
-#endif
-
 
 static void chargerInit(void)
 {
@@ -64,7 +59,7 @@ static void chargerInit(void)
   GPIO_InitStructure.GPIO_Pin = CHARGER_STATE_GPIO_PIN | CHARGER_FAULT_GPIO_PIN;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(CHARGER_STATE_GPIO, &GPIO_InitStructure);
 }
 
@@ -289,13 +284,48 @@ void boardOff()
 
 uint16_t getBatteryVoltage()
 {
+extern uint32_t libCrsf_MyHwID;
   int32_t instant_vbat = anaIn(TX_VOLTAGE); // using filtered ADC value on purpose
-  instant_vbat = instant_vbat / BATT_SCALE + g_eeGeneral.txVoltageCalibration;
+  float batt_scale;
+  switch(libCrsf_MyHwID & ~HW_ID_MASK)
+  {
+    case 0x02:
+      batt_scale = BATT_SCALE2;
+      break;
+    default:
+      batt_scale = BATT_SCALE;
+      break;
+  }
+  instant_vbat = instant_vbat / batt_scale + g_eeGeneral.txVoltageCalibration;
   instant_vbat = instant_vbat > BATTERY_MAX * 10 ? BATTERY_MAX * 10 : instant_vbat;
   return (uint16_t)instant_vbat;
 }
 
 #if !defined(SIMU)
+void boardTurnOffRf()
+{
+  while(!get_crsf_flag(CRSF_FLAG_RF_OFF)) {     
+    lcdRefreshWait();
+    lcdClear();
+    POPUP_CONFIRMATION(STR_JOYSTICK_RF, nullptr);
+    SET_WARNING_INFO(STR_TURN_OFF_RF, sizeof(TR_TURN_OFF_RF), 0);
+    event_t evt = getEvent(false);
+    DISPLAY_WARNING(evt);
+    lcdRefresh();
+
+    if (warningResult) {
+#if defined(ESP_SERIAL)
+      espOff();
+#endif
+      set_crsf_flag(CRSF_FLAG_RF_OFF);
+      break;
+    }
+    else if (!warningText) {
+      break;
+    }
+  }
+}
+
 void boardSetSkipWarning()
 {
   setFlag( DEVICE_RESTART_WITHOUT_WARN_FLAG );
@@ -533,6 +563,8 @@ void hf_printf(const char * TxBuf, ...)
 
 void _general_exception_handler (unsigned int * hardfault_args)
 {
+  bool xf_active = true;
+  bool (*uart_irq)( uint8_t, uint8_t ) = (bool (*)( uint8_t, uint8_t ))crossfireSharedData.trampoline[DEBUG_UART_IRQ_TRAMPOLINE];
   unsigned int stacked_r0;
   unsigned int stacked_r1;
   unsigned int stacked_r2;
@@ -548,9 +580,19 @@ void _general_exception_handler (unsigned int * hardfault_args)
   stacked_r3 = ((unsigned long) hardfault_args[3]);
 
   stacked_r12 = ((unsigned long) hardfault_args[4]);
-  stacked_lr = ((unsigned long) hardfault_args[5]);
-  stacked_pc = ((unsigned long) hardfault_args[6]);
+  stacked_lr  = ((unsigned long) hardfault_args[5]);
+  stacked_pc  = ((unsigned long) hardfault_args[6]);
   stacked_psr = ((unsigned long) hardfault_args[7]);
+
+  // to print all buffered messages before printing the stack
+  while(1)
+  {
+    wdt_reset();
+    if (USART_GetFlagStatus(AUX_SERIAL_USART, USART_FLAG_TXE) != RESET)
+      xf_active = uart_irq( UART_INT_MODE_TX, 0);
+    if(!xf_active)
+      break;
+  }
 
   hf_printf ("\r\n\n***FreedomTx Hard Fault Handler Debug Printing***\r\n");
   hf_printf ("R0\t\t= 0x%.8x\r\n", stacked_r0);

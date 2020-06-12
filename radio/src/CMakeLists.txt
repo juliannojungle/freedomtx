@@ -346,6 +346,10 @@ if(FRSKY_RELEASE)
   set(POPUP_LEVEL 3)
 endif()
 
+if(TBS_RELEASE)
+  add_definitions(-DTBS_RELEASE)
+endif()
+
 add_definitions(-DPOPUP_LEVEL=${POPUP_LEVEL})
 
 set(SRC

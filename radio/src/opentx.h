@@ -460,9 +460,6 @@ void alert(const char * title, const char * msg, uint8_t sound);
 #if !defined(GUI)
   #define RAISE_ALERT(...)
   #define ALERT(...)
-#elif defined(PCBTANGO) && !defined (SIMU)
-  #define RAISE_ALERT(title, msg, info, sound) do{ if(getBoardOffState()){ return; }else{ showAlertBox(title, msg, info, sound); }}while(0)
-  #define ALERT(title, msg, sound) alert(title, msg, sound)
 #else
   inline void RAISE_ALERT(const char * title, const char * msg, const char * info, uint8_t sound)
   {

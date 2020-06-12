@@ -1,6 +1,7 @@
 option(DISK_CACHE "Enable SD card disk cache" ON)
 option(SHUTDOWN_CONFIRMATION "Shutdown confirmation" OFF)
 option(LCD_DUAL_BUFFER "Dual LCD Buffer" OFF)
+option(TBS_RELEASE "Used to build TBS released firmware" ON)
 
 
 option(CROSSFIRE_TASK "Crossfire task" YES)
@@ -78,7 +79,6 @@ if(SPLASH STREQUAL OFF)
   message(FATAL_ERROR "Option SPLASH=OFF not supported on Tango2")
 endif()
 
-add_definitions(-DTBS_RELEASE)
 add_definitions(-DAUDIO -DVOICE -DRTCLOCK)
 
 set(GUI_SRC ${GUI_SRC}

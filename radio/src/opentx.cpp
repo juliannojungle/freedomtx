@@ -2036,6 +2036,9 @@ void opentxInit()
   }
 
   if (!globalData.unexpectedShutdown) {
+#if defined(PCBTANGO)
+    if(getBoardOffState()) opentxStart(OPENTX_START_NO_SPLASH | OPENTX_START_NO_CHECKS); else    
+#endif
     opentxStart();
   }
 

@@ -31,6 +31,9 @@ void onUSBConnectMenu(const char *result)
     setSelectedUsbMode(USB_MASS_STORAGE_MODE);
   }
   else if (result == STR_USB_JOYSTICK) {
+#if defined(PCBTANGO) && !defined(SIMU)
+    boardTurnOffRf();
+#endif
     setSelectedUsbMode(USB_JOYSTICK_MODE);
   }
 #if defined(PCBTANGO)
@@ -62,7 +65,8 @@ void handleUsbConnection()
   static uint8_t usbFirstPluggedStage = 2;
   if ((!usbStarted() && usbPlugged() && getSelectedUsbMode() == USB_UNSELECTED_MODE) ||
           (usbFirstPluggedStage > 0 && usbPlugged() && getSelectedUsbMode() == USB_AGENT_MODE)) {
-      usbFirstPluggedStage = 1;
+    usbFirstPluggedStage = 1;
+    backlightOn();
 #else
   if (!usbStarted() && usbPlugged() && getSelectedUsbMode() == USB_UNSELECTED_MODE) {
 #endif

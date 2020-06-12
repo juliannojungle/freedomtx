@@ -53,7 +53,6 @@ void rotaryEncoderCheck();
 
 #define MODEL_DATA_SIZE_101             6245
 #define MODEL_DATA_SIZE_110             6253
-#define MODEL_EEPROM_VER_101            219
 
 #if defined(__cplusplus) && !defined(SIMU)
 extern "C" {
@@ -335,8 +334,9 @@ uint16_t getBatteryVoltage();   // returns current battery voltage in 10mV steps
 
 #define BATT_CALIB_OFFSET             5
 #define BATT_SCALE                    (4.446f)
+#define BATT_SCALE2                   (4.162f)
 // BATT_SCALE = 12-bit max value * pd / ANALOG_MULTIPLIER / vref / multiplication
-//            = 4095 * 2/3 / 2 / 3.07 / 100
+//            = 4095 * 2/3 / 2 / vref / 100
 
 #if defined(__cplusplus) && !defined(SIMU)
 extern "C" {
@@ -542,6 +542,7 @@ enum {
   DEVICE_RESTART_WITHOUT_WARN_FLAG = 0x0,
 };
 
+void boardTurnOffRf();
 void boardSetSkipWarning();
 uint32_t readBackupReg(uint8_t index);
 void writeBackupReg(uint8_t index, uint32_t data);

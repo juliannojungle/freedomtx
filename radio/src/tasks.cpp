@@ -337,20 +337,12 @@ TASK_FUNCTION(systemTask)
 #if defined(AGENT) && !defined(SIMU)
     AgentHandler();
 #endif
-    if (set_model_id_needed && g_model.header.modelId[EXTERNAL_MODULE] != 0) {
+    if (set_model_id_needed && g_model.header.modelId[EXTERNAL_MODULE] != 0 && get_tmr10ms() - get_modelid_delay > 100 ) {
       crsfSetModelID();
-      set_model_id_needed = false;
       crsfGetModelID();
+      if(current_crsf_model_id == g_model.header.modelId[EXTERNAL_MODULE])
+        set_model_id_needed = false;
       get_modelid_delay = get_tmr10ms();
-    }
-    if (get_modelid_delay && (get_tmr10ms() - get_modelid_delay) > 100) {
-      if (current_crsf_model_id == g_model.header.modelId[EXTERNAL_MODULE]) {
-        TRACE("Set model id for crossfire success, current id = %d\r\n", current_crsf_model_id);
-      }
-      else {
-        TRACE("Set model id for crossfire failed, current id = %d\r\n", current_crsf_model_id);
-      }
-      get_modelid_delay = 0;
     }
   }
   TASK_RETURN();

@@ -117,7 +117,13 @@ void initModelsList()
     }
   }
   if (!found) {
+    modelslist.addModel(currentCategory, g_eeGeneral.currModelFilename);
     setCurrentModel(0);
+    modelslist.setCurrentModel(currentModel);
+    modelslist.save();
+    storageDirty(EE_GENERAL);
+    storageDirty(EE_MODEL);
+    storageCheck(true);
   }
 }
 

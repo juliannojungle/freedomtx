@@ -149,7 +149,7 @@
   #define CHARGER_STATE_GPIO            GPIOD
   #define CHARGER_STATE_GPIO_PIN        GPIO_Pin_10 // PD.10
   #define CHARGER_FAULT_GPIO            GPIOD
-  #define CHARGER_FAULT_GPIO_PIN        GPIO_Pin_11 // PD.10
+  #define CHARGER_FAULT_GPIO_PIN        GPIO_Pin_11 // PD.11
 
   // Internal Module
   #define INTMODULE_PULSES

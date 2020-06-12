@@ -14,9 +14,18 @@ if(PCB STREQUAL X12S OR PCB STREQUAL X10)
   set(EEPROM_CONVERSIONS 218)
 endif()
 
-if(PCB STREQUAL TANGO)
-  set(EEPROM_CONVERSIONS 101)
+
+if (PCB STREQUAL TANGO)
+  if (VERSION_MAJOR STREQUAL "1" AND VERSION_MINOR STREQUAL "1" AND VERSION_REVISION STREQUAL "1")
+    set(SRC
+      ${SRC}
+      storage/conversions/conversions_101_110.cpp
+      )
+    add_definitions(-DTANGO_CONVERT_VERSION_101)
+  endif()
+  set(EEPROM_CONVERSIONS 219)
 endif()
+
 
 if(EEPROM_CONVERSIONS)
   add_definitions(-DEEPROM_CONVERSIONS=${EEPROM_CONVERSIONS})
@@ -26,26 +35,16 @@ if(EEPROM_CONVERSIONS)
     )
 endif()
 
-if(PCB STREQUAL TANGO)
-  if (VERSION_MAJOR STREQUAL "1" AND VERSION_MINOR STREQUAL "1" AND VERSION_REVISION STREQUAL "0")
-    set(SRC
-      ${SRC}
-      storage/conversions/conversions_101_110.cpp
-      )
-    add_definitions(-DTANGO_CONVERT_VERSION_101)
-  endif()
-else()
-  if(EEPROM_CONVERSIONS LESS 218)
-    set(SRC
-      ${SRC}
-      storage/conversions/conversions_216_218.cpp
-      )
-  endif()
-
-  if(EEPROM_CONVERSIONS LESS 219)
-    set(SRC
-      ${SRC}
-      storage/conversions/conversions_218_219.cpp
+if(EEPROM_CONVERSIONS LESS 218)
+  set(SRC
+    ${SRC}
+    storage/conversions/conversions_216_218.cpp
     )
-  endif()
+endif()
+
+if(EEPROM_CONVERSIONS LESS 219)
+  set(SRC
+    ${SRC}
+    storage/conversions/conversions_218_219.cpp
+  )
 endif()

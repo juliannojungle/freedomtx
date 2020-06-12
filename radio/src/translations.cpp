@@ -203,6 +203,8 @@ const char STR_MOVESTICK_P8[] = TR_MOVESTICK_P8;
 const char STR_CAL_POINTS[] = TR_CAL_POINTS;
 const char STR_RELEASE_STICK[] = TR_RELEASE_STICK;
 const char STR_MOVE_PLUS[] = TR_MOVE_PLUS;
+const char STR_JOYSTICK_RF[] = TR_JOYSTICK_RF;
+const char STR_TURN_OFF_RF[] = TR_TURN_OFF_RF;
 #endif
 const char STR_TX[] = TR_TXnRX;
 const char STR_NODATA[] = TR_NODATA;

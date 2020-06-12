@@ -46,6 +46,9 @@ extern RTOS_DEFINE_STACK(audioStack, AUDIO_STACK_SIZE);
 extern RTOS_MUTEX_HANDLE mixerMutex;
 extern RTOS_FLAG_HANDLE openTxInitCompleteFlag;
 
+extern RTOS_TASK_HANDLE crossfireTaskId;
+extern RTOS_TASK_HANDLE systemTaskId;
+
 void stackPaint();
 void tasksStart();
 

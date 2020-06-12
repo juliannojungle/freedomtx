@@ -42,7 +42,9 @@ extern "C" {
 #define BITTEST( a, b )                   ( ( a )[ BITSLOT( b ) ] & BITMASK_8( b ) )
 #define BITNSLOTS( nb )                   ( ( nb + CHAR_BIT -1 ) / CHAR_BIT )
 
-#define LIBUTIL_ARRAY_SIZE( array )   ( sizeof( array ) / sizeof( array[ 0 ] ) )
+#define LIBUTIL_ARRAY_SIZE( array )       ( sizeof( array ) / sizeof( array[ 0 ] ) )
+
+#define HW_ID_MASK                        (uint32_t) 0xFFFFFF00
 
 /* ******************** Public Functions and Procedures ******************** */
   extern uint32_t ( *libUtil_systemtime )( void );

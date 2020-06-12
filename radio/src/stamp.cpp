@@ -36,6 +36,8 @@
 #define DISPLAY_VERSION "FrSky"
 #elif defined(JUMPER_RELEASE)
 #define DISPLAY_VERSION "JumperRC"
+#elif defined(TBS_RELEASE)
+#define DISPLAY_VERSION "TBS-" VERSION
 #else
 #define DISPLAY_VERSION VERSION
 #endif
@@ -48,7 +50,7 @@
 #elif defined(BOARD_NAME)
   const char vers_stamp[]  = "FW" TAB ": opentx-" BOARD_NAME "\036VERS" TAB ": " DISPLAY_VERSION " (" GIT_STR ")" "\036DATE" TAB ": " DATE " " TIME "\036EEPR" TAB ": " EEPROM_STR;
 #elif defined(PCBTANGO)
-  const char vers_stamp[]  = "FW\037\033: " "fdtx-" FLAVOUR "\036VERS\037\033: " VERSION "\036DATE\037\033: " DATE "\036TIME\037\033: " TIME "\036EEPR\037\033: " EEPROM_STR;
+  const char vers_stamp[]  = "FW" TAB ": fdtx-"   FLAVOUR    "\036VERS" TAB ": " DISPLAY_VERSION " (" GIT_STR ")" "\036DATE" TAB ": " DATE " " TIME "\036EEPR" TAB ": " EEPROM_STR;
 #else
   const char vers_stamp[]  = "FW" TAB ": opentx-" FLAVOUR    "\036VERS" TAB ": " DISPLAY_VERSION " (" GIT_STR ")" "\036DATE" TAB ": " DATE " " TIME "\036EEPR" TAB ": " EEPROM_STR;
 #endif

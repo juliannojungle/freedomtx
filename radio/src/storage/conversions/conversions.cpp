@@ -25,12 +25,8 @@
 void convertRadioData(int version)
 {
 #if defined(PCBTANGO)
-  #if EEPROM_CONVERSIONS < EEPROM_VER
-    if (version == MODEL_EEPROM_VER_101)
-    {
-      convertRadioData_101_to_110(g_eeGeneral);
-    }
-    return;
+  #if defined(TANGO_CONVERT_VERSION_101)
+    convertRadioData_101_to_110(g_eeGeneral);
   #endif
 #endif
 
@@ -61,12 +57,8 @@ void convertRadioData(int version)
 void convertModelData(int version)
 {
 #if defined(PCBTANGO)
-  #if EEPROM_CONVERSIONS < EEPROM_VER
-    if (version == MODEL_EEPROM_VER_101)
-    {
+  #if defined(TANGO_CONVERT_VERSION_101)
       convertModelData_101_to_110(g_model);
-    }
-    return;
   #endif
 #endif
 

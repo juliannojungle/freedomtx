@@ -26,10 +26,10 @@
 #define RGB_LED_BIT_BUF_SIZE            (RGB_LED_RGB_BITS + 1)
 
 #define RGB_COLOUR_OFF      0,0,0
-#define RGB_COLOUR_RED      64,0,0
-#define RGB_COLOUR_GREEN    0,64,0
-#define RGB_COLOUR_BLUE     0,0,64
-#define RGB_COLOUR_WHITE    64,64,64
+#define RGB_COLOUR_RED      25,0,0
+#define RGB_COLOUR_GREEN    0,25,0
+#define RGB_COLOUR_BLUE     0,0,25
+#define RGB_COLOUR_WHITE    25,25,25
 
 #define RGB2BUFFER(Red, Green, Blue)    (((uint32_t) Green << 16) |  ((uint32_t) Red << 8) | (uint32_t)Blue)
 

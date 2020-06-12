@@ -343,6 +343,8 @@ extern const char STR_MOVESTICK_P8[];
 extern const char STR_CAL_POINTS[];
 extern const char STR_RELEASE_STICK[];
 extern const char STR_MOVE_PLUS[];
+extern const char STR_JOYSTICK_RF[];
+extern const char STR_TURN_OFF_RF[];
 #endif
 extern const char STR_RXBATT[];
 extern const char STR_TX[];

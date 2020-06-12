@@ -234,17 +234,10 @@ enum MenuRadioVersionItems
 void menuRadioVersion(event_t event)
 {
   SIMPLE_MENU(STR_MENUVERSION, menuTabGeneral, MENU_RADIO_VERSION, ITEM_RADIO_VERSION_COUNT);
-#if defined(PCBTANGO)
-  coord_t y = MENU_HEADER_HEIGHT + 20;
-  lcdDrawText(FW, y, vers_stamp, SMLSIZE);
-  y += 6 * (FH - 1);
-#else
+
   coord_t y = MENU_HEADER_HEIGHT + 2;
   lcdDrawText(FW, y, vers_stamp, SMLSIZE);
   y += 4 * (FH - 1);
-#endif
-
-
 
 #if defined(COPROCESSOR)
   lcdDrawText(FW, y, "COPR\037\033: ", SMLSIZE);
