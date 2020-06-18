@@ -126,6 +126,9 @@ DRESULT disk_read_dma(BYTE drv, BYTE * buff, DWORD sector, UINT count)
   DRESULT res;
   SD_Error Status;
   SDTransferState State;
+#if defined(DISK_OPERATION_TIMEOUT)
+  volatile uint32_t tmr;
+#endif
   for (int retry=0; retry<3; retry++) {
     res = RES_OK;
     if (count == 1) {
@@ -136,7 +139,16 @@ DRESULT disk_read_dma(BYTE drv, BYTE * buff, DWORD sector, UINT count)
     }
     if (Status == SD_OK) {
       Status = SD_WaitReadOperation(200*count); // Check if the Transfer is finished
-      while ((State = SD_GetStatus()) == SD_TRANSFER_BUSY); // BUSY, OK (DONE), ERROR (FAIL)
+      tmr = g_tmr10ms;
+      do
+      {
+        State = SD_GetStatus(); // BUSY, OK (DONE), ERROR (FAIL)
+        delay_ms(1);
+#if defined(DISK_OPERATION_TIMEOUT)
+        if (g_tmr10ms - tmr >= DISK_OPERATION_TIMEOUT)
+          State = SD_TRANSFER_ERROR;
+#endif
+      } while(State == SD_TRANSFER_BUSY);
       if (State == SD_TRANSFER_ERROR)  {
         TRACE("State=SD_TRANSFER_ERROR, c: %u", sector, (uint32_t)count);
         res = RES_ERROR;

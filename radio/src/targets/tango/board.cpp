@@ -34,9 +34,6 @@ extern "C" {
 static uint8_t boardOffState = 0;
 static uint8_t isDisableBoardOff();
 static uint8_t checkDefaultWord();
-uint8_t getFlag(uint32_t flag);
-void setFlag(uint32_t flag);
-void clearFlag(uint32_t flag);
 #endif
 
 HardwareOptions hardwareOptions;
@@ -91,6 +88,10 @@ static void detectChargingMode(void)
   }
 
   while (IS_CHARGING_STATE() && !IS_CHARGING_FAULT() && usbPlugged() && !pwrPressed()) {
+    if(WAS_RESET_BY_SOFTWARE()) {
+      // clear reset status if it's not pressed
+      RCC_ClearFlag();
+    }
     if ((g_tmr10ms - tm10ms) > 9) {
       getADC();
       tm10ms = g_tmr10ms;
@@ -189,8 +190,7 @@ void boardInit()
 #endif
 
 #if !defined(SIMU)
-  if(!isDisableBoardOff()){
-    RCC_ClearFlag();
+  if(!isDisableBoardOff() && !WAS_RESET_BY_WATCHDOG()){
     detectChargingMode();
   }
 #endif
@@ -328,7 +328,7 @@ void boardTurnOffRf()
 
 void boardSetSkipWarning()
 {
-  setFlag( DEVICE_RESTART_WITHOUT_WARN_FLAG );
+  setStatusFlag( DEVICE_RESTART_WITHOUT_WARN_FLAG );
 }
 
 uint32_t readBackupReg(uint8_t index){
@@ -364,8 +364,8 @@ uint8_t getBoardOffState(){
 static uint8_t isDisableBoardOff(){
   uint8_t value = (uint8_t)readBackupReg(BOOTLOADER_IS_SKIP_BOARD_OFF_ADDR);
   writeBackupReg(BOOTLOADER_IS_SKIP_BOARD_OFF_ADDR, 0);
-  boardOffState = getFlag(DEVICE_RESTART_WITHOUT_WARN_FLAG);
-  clearFlag(DEVICE_RESTART_WITHOUT_WARN_FLAG);
+  boardOffState = getStatusFlag(DEVICE_RESTART_WITHOUT_WARN_FLAG);
+  clrStatusFlag(DEVICE_RESTART_WITHOUT_WARN_FLAG);
   boardOffState |= value;
   if(!checkDefaultWord()){
     boardOffState = 0;
@@ -390,18 +390,18 @@ static uint8_t checkDefaultWord(){
   return 1;
 }
 
-uint8_t getFlag(uint32_t flag){
+uint8_t getStatusFlag(uint32_t flag){
   uint32_t value = (uint32_t)readBackupReg(BOOTLOADER_FLAG_ADDR);
-  return (uint8_t)(value & (1 << flag) >> flag);
+  return ((value & (1 << flag)) ? 1 : 0);
 }
 
-void setFlag(uint32_t flag){
+void setStatusFlag(uint32_t flag){
   uint32_t value = (uint32_t)readBackupReg(BOOTLOADER_FLAG_ADDR);
   value |= (1 << flag);
   writeBackupReg(BOOTLOADER_FLAG_ADDR, value);
 }
 
-void clearFlag(uint32_t flag){
+void clrStatusFlag(uint32_t flag){
   uint32_t value = (uint32_t)readBackupReg(BOOTLOADER_FLAG_ADDR);
   value &= ~(1 << flag);
   writeBackupReg(BOOTLOADER_FLAG_ADDR, value);
@@ -430,14 +430,7 @@ void trampolineInit( void )
 #endif
 }
 
-void tangoUpdateChannel( void )
-{
-  uint8_t i;
-  for ( i = 0; i < CROSSFIRE_CHANNELS_COUNT; ++i)
-    crossfireSharedData.channels[i] = channelOutputs[i];
-}
-
-void loadTangoRadioSettings(void)
+void loadDefaultRadioSettings(void)
 {
   // this is to reset incorrect radio settings. should be removed later.
   g_eeGeneral.lightAutoOff = g_eeGeneral.lightAutoOff < BACKLIGHT_TIMEOUT_MIN ? 6 : g_eeGeneral.lightAutoOff;

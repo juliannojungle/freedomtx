@@ -1988,7 +1988,9 @@ void opentxInit()
 
 #if defined(PCBTANGO)
   // read the settings (especailly power on delay) from sdcard first then run the startup animation
-  if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE()) {
+  if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE() || getStatusFlag(STORAGE_ERASE_STATUS)) {
+    if(getStatusFlag(STORAGE_ERASE_STATUS))
+      clrStatusFlag(STORAGE_ERASE_STATUS);
     pwrOn();
   }
   else {

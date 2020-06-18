@@ -264,6 +264,9 @@ void storageReadAll()
 
   if (loadRadioSettings() != nullptr) {
     storageEraseAll(true);
+#if defined(PCBTANGO)
+    setStatusFlag(STORAGE_ERASE_STATUS);
+#endif
   }
 
   for (uint8_t i = 0; languagePacks[i] != nullptr; i++) {

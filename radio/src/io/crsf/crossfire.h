@@ -113,6 +113,7 @@ void CRSF_Init( void );
 void crsfSharedFifoHandler( void );
 void crsfSetModelID(void);
 void crsfGetModelID(void);
+void UpdateCrossfireChannels( void );
 void crsfEspHandler( void );
 void CRSF_to_Shared_FIFO( uint8_t *p_arr );
 void CRSF_to_ESP( uint8_t *p_arr );

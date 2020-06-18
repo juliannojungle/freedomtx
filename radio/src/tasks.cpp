@@ -29,7 +29,7 @@ RTOS_DEFINE_STACK(mixerStack, MIXER_STACK_SIZE);
 RTOS_TASK_HANDLE audioTaskId;
 RTOS_DEFINE_STACK(audioStack, AUDIO_STACK_SIZE);
 
-#if defined(PCBTANGO)
+#if defined(CROSSFIRE_TASK)
 RTOS_TASK_HANDLE crossfireTaskId;
 RTOS_DEFINE_STACK(crossfireStack, CROSSFIRE_STACK_SIZE);
 
@@ -146,7 +146,7 @@ TASK_FUNCTION(mixerTask)
     uint32_t now = RTOS_GET_MS();
     bool run = false;
 
-#if defined(PCBTANGO) && !defined(SIMU)
+#if defined(CROSSFIRE_TASK) && !defined(SIMU)
     if (isMixerTaskScheduled()) {
       clearMixerTaskSchedule();
       run = true;
@@ -195,8 +195,8 @@ TASK_FUNCTION(mixerTask)
       if (getSelectedUsbMode() == USB_JOYSTICK_MODE) {
         usbJoystickUpdate();
       }
-#if defined(PCBTANGO)
-      tangoUpdateChannel();
+#if defined(CROSSFIRE_TASK)
+      UpdateCrossfireChannels();
 #endif
 #endif
 
@@ -285,7 +285,7 @@ TASK_FUNCTION(menusTask)
     resetForcePowerOffRequest();
   }
 
-#if defined(PCBTANGO) && defined(LIBCRSF_ENABLE_OPENTX_RELATED) && defined(LIBCRSF_ENABLE_SD)
+#if defined(CROSSFIRE_TASK) && defined(LIBCRSF_ENABLE_OPENTX_RELATED) && defined(LIBCRSF_ENABLE_SD)
   if((*(uint32_t *)CROSSFIRE_TASK_ADDRESS != 0xFFFFFFFF) &&
     getSelectedUsbMode() != USB_MASS_STORAGE_MODE && sdMounted()){
     set_crsf_flag( CRSF_FLAG_EEPROM_SAVE );

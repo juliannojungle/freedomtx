@@ -128,8 +128,10 @@ uint32_t sdGetSpeed();
 DRESULT __disk_read(BYTE drv, BYTE * buff, DWORD sector, UINT count);
 DRESULT __disk_write(BYTE drv, const BYTE * buff, DWORD sector, UINT count);
 #else
-#define __disk_read                    disk_read
-#define __disk_write                   disk_write
+#define __disk_read                     disk_read
+#define __disk_write                    disk_write
+#define DISK_OPERATION_TIMEOUT          5
+#define SD_MAX_VOLT_TRIAL               ((uint32_t)0x000000FF)
 #endif
 
 #if defined(SIMU)
@@ -513,7 +515,6 @@ extern AuxSerialRxFifo auxSerialRxFifo;
 #define DISPLAY_PROGRESS_BAR(...) do{} while(0)
 
 void CRSF_Init(void);
-void tangoUpdateChannel(void);
 void trampolineInit(void);
 
 #if defined(ESP_SERIAL)
@@ -538,9 +539,11 @@ uint8_t espReadBuffer(uint8_t* buf);
 #define BOOTLOADER_FLAG_ADDR                  0x8
 #define BOOTLOADER_DEFAULT_WORD_ADDR          0x9
 
-enum {
+typedef enum {
   DEVICE_RESTART_WITHOUT_WARN_FLAG = 0x0,
-};
+  STORAGE_ERASE_STATUS,
+  BOOTLOADER_FLAG_COUNT,
+} BOOTLOADER_FLAG_INDEX;
 
 void boardTurnOffRf();
 void boardSetSkipWarning();
@@ -548,11 +551,14 @@ uint32_t readBackupReg(uint8_t index);
 void writeBackupReg(uint8_t index, uint32_t data);
 void boot2bootloader(uint32_t isNeedFlash, uint32_t HwId, uint32_t sn);
 uint8_t getBoardOffState();
+uint8_t getStatusFlag(uint32_t flag);
+void setStatusFlag(uint32_t flag);
+void clrStatusFlag(uint32_t flag);
 
 void crossfireOff( void );
 
 void PrintData(char* header, uint8_t* data);
 
-void loadTangoRadioSettings(void);
+void loadDefaultRadioSettings(void);
 
 #endif // _BOARD_H_

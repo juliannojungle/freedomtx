@@ -231,6 +231,12 @@ void crsfGetModelID(void)
   CRSF_to_Shared_FIFO(txBuf);
 }
 
+void UpdateCrossfireChannels( void )
+{
+  uint8_t i;
+  for ( i = 0; i < CROSSFIRE_CHANNELS_COUNT; ++i)
+    crossfireSharedData.channels[i] = channelOutputs[i];
+}
 
 void crsfEspHandler( void )
 {

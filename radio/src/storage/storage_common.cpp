@@ -62,7 +62,7 @@ void postRadioSettingsLoad()
     setDefaultOwnerId();
   }
 #elif defined(PCBTANGO) && !defined (SIMU)
-  loadTangoRadioSettings();
+  loadDefaultRadioSettings();
 #endif
 }
 

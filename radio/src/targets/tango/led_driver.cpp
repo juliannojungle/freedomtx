@@ -20,8 +20,8 @@
 
 #include "opentx.h"
 
-#define RGB_LED_CODE_1_TIME             68
-#define RGB_LED_CODE_0_TIME             34
+#define RGB_LED_CODE_1_TIME             66
+#define RGB_LED_CODE_0_TIME             24
 #define RGB_LED_RGB_BITS                24    
 #define RGB_LED_BIT_BUF_SIZE            (RGB_LED_RGB_BITS + 1)
 
@@ -50,7 +50,7 @@ void ledInit()
   LED_DMA_STREAM->CR &= ~DMA_SxCR_EN;
   LED_TIMER->CR1 &= ~TIM_CR1_CEN;
   LED_TIMER->PSC = 0;
-  LED_TIMER->ARR = 104;
+  LED_TIMER->ARR = 92;
   
   LED_TIMER->CCER |= TIM_CCER_CC4E;
   LED_TIMER->BDTR = TIM_BDTR_MOE; // Enable outputs
@@ -70,6 +70,10 @@ void ledSetColour(uint8_t Red, uint8_t Green, uint8_t Blue)
   uint8_t i; 
   uint32_t Shift_Reg_Mask;
   uint32_t RGB_Buffer = 0;
+  volatile uint32_t ResetTmr = getTmr2MHz();
+
+  LED_DMA_STREAM->CR &= ~DMA_SxCR_EN;
+  LED_TIMER->CCR4 = 0;
 
   RGB_Buffer = RGB2BUFFER(Red,Green,Blue);
   Shift_Reg_Mask = 1 << (RGB_LED_RGB_BITS - 1);
@@ -83,8 +87,9 @@ void ledSetColour(uint8_t Red, uint8_t Green, uint8_t Blue)
     Shift_Reg_Mask >>= 1;      
   }
 
+  // 280us reset time gap
+  while(getTmr2MHz() - ResetTmr <= 600);
   LED_TIMER->CR1 &= ~TIM_CR1_CEN;
-  LED_DMA_STREAM->CR &= ~DMA_SxCR_EN;
 
   DMA1->HIFCR = LED_DMA_FLAG_TC | LED_DMA_FLAG_ERRORS;
   LED_DMA_STREAM->PAR = CONVERT_PTR_UINT(&LED_TIMER->CCR4);
