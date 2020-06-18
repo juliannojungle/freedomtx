@@ -314,6 +314,7 @@ void boardTurnOffRf()
     lcdRefresh();
 
     if (warningResult) {
+      warningResult = 0;
 #if defined(ESP_SERIAL)
       espOff();
 #endif
