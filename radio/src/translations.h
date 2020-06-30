@@ -327,6 +327,27 @@ extern const char STR_VTRIM[];
 extern const char STR_MENUTOSTART[];
 extern const char STR_SETMIDPOINT[];
 extern const char STR_MOVESTICKSPOTS[];
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+extern const char STR_LEFT[];
+extern const char STR_RIGHT[];
+extern const char STR_BOTH[];
+extern const char STR_MOVESTICK_P0[];
+extern const char STR_MOVESTICK_P1[];
+extern const char STR_MOVESTICK_P2[];
+extern const char STR_MOVESTICK_P3[];
+extern const char STR_MOVESTICK_P4[];
+extern const char STR_MOVESTICK_P5[];
+extern const char STR_MOVESTICK_P6[];
+extern const char STR_MOVESTICK_P7[];
+extern const char STR_MOVESTICK_P8[];
+extern const char STR_CAL_POINTS[];
+extern const char STR_RELEASE_STICK[];
+extern const char STR_MOVE_PLUS[];
+extern const char STR_JOYSTICK_RF[];
+extern const char STR_TURN_OFF_RF[];
+extern const char STR_ROTARY_REVERSE[];
+#endif
+extern const char STR_RXBATT[];
 extern const char STR_TX[];
 #define STR_RX (STR_TX+OFS_RX)
 extern const char STR_NODATA[];
@@ -347,6 +368,7 @@ extern const char STR_BAD_RADIO_DATA[];
 extern const char STR_STORAGE_FORMAT[];
 extern const char STR_EEPROMOVERFLOW[];
 extern const char STR_TRIMS2OFFSETS[];
+extern const char STR_OUTPUTS2FAILSAFE[];
 extern const char STR_CHANNELS2FAILSAFE[];
 extern const char STR_CHANNEL2FAILSAFE[];
 extern const char STR_MENURADIOSETUP[];
@@ -410,12 +432,16 @@ extern const char STR_MULTI_RFCHAN[];
 extern const char STR_SUBTYPE[];
 #endif
 
-#if defined(DSM2) || defined(PXX)
+#if defined(DSM2) || defined(PXX) || defined(PCBTANGO) || defined (PCBMAMBO)
 extern const char STR_RECEIVER_NUM[];
 extern const char STR_RECEIVER[];
 extern const char STR_REBIND[];
 extern const char STR_REG_OK[];
 extern const char STR_BIND_OK[];
+#endif
+
+#if defined(PCBTANGO) || defined (PCBMAMBO)
+extern const char STR_CROSSFIRE[];
 #endif
 
 extern const char STR_INTERNALRF[];
@@ -486,6 +512,9 @@ extern const char STR_RESET_TELEMETRY[];
 extern const char STR_STATISTICS[];
 extern const char STR_ABOUT_US[];
 extern const char STR_USB_JOYSTICK[];
+#if defined(AGENT)
+extern const char STR_USB_AGENT[];
+#endif
 extern const char STR_USB_MASS_STORAGE[];
 extern const char STR_USB_SERIAL[];
 extern const char STR_SETUP_SCREENS[];
@@ -882,6 +911,12 @@ extern const char STR_ABOUT_OPENTX_2[];
 extern const char STR_ABOUT_OPENTX_3[];
 extern const char STR_ABOUT_OPENTX_4[];
 extern const char STR_ABOUT_OPENTX_5[];
+
+extern const char STR_ABOUT_FREEDOMTX_1[];
+extern const char STR_ABOUT_FREEDOMTX_2[];
+extern const char STR_ABOUT_FREEDOMTX_3[];
+extern const char STR_ABOUT_FREEDOMTX_4[];
+extern const char STR_ABOUT_FREEDOMTX_5[];
 
 extern const char STR_ABOUT_BERTRAND_1[];
 extern const char STR_ABOUT_BERTRAND_2[];

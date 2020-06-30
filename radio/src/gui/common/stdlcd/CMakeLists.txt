@@ -19,6 +19,10 @@ set(GUI_SRC
   model_curve_edit.cpp
   )
 
+if(PCB STREQUAL TANGO OR PCB STREQUAL MAMBO)
+  list(REMOVE_ITEM GUI_SRC ../common/stdlcd/radio_trainer.cpp)
+endif()
+
 if(PXX2 OR LUA OR MULTIMODULE)
   set(GUI_SRC ${GUI_SRC} ../common/stdlcd/radio_tools.cpp)
 endif()

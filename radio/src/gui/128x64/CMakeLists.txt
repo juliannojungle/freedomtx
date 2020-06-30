@@ -22,6 +22,30 @@ set(GUI_SRC
   view_statistics.cpp
   )
 
+if(PCB STREQUAL TANGO)
+  list(REMOVE_ITEM GUI_SRC 
+    lcd.cpp
+    model_select.cpp
+    radio_calibration.cpp)
+  set(GUI_SRC
+    ${GUI_SRC}
+    lcd_4bits.cpp
+    radio_calibration_hall.cpp
+    model_select_tango.cpp
+    model_crossfire_setup.cpp
+    )
+elseif(PCB STREQUAL MAMBO)
+  list(REMOVE_ITEM GUI_SRC 
+    model_select.cpp
+    radio_calibration.cpp)
+  set(GUI_SRC
+    ${GUI_SRC}
+    radio_calibration_hall.cpp
+    model_select_mambo.cpp
+    model_crossfire_setup.cpp
+    )
+endif()
+
 if(FLIGHT_MODES)
   set(GUI_SRC
     ${GUI_SRC}

@@ -242,7 +242,7 @@
 
 #include "debug.h"
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO) || defined(PCBMAMBO)
   #define SWSRC_THR                    SWSRC_SB2
   #define SWSRC_GEA                    SWSRC_SG2
   #define SWSRC_ID0                    SWSRC_SA0
@@ -265,13 +265,18 @@ void memswap(void * a, void * b, uint8_t size);
   #define IS_POT_AVAILABLE(x)          (IS_POT(x) && POT_CONFIG(x)!=POT_NONE)
   #define IS_POT_SLIDER_AVAILABLE(x)   (IS_POT_AVAILABLE(x) || IS_SLIDER_AVAILABLE(x))
   #define IS_MULTIPOS_CALIBRATED(cal)  (cal->count>0 && cal->count<XPOTS_MULTIPOS_COUNT)
-#elif defined(PCBX7) || defined(PCBXLITE)
+#elif defined(PCBX7) || defined(PCBXLITE) || defined(PCBMAMBO)
   #define POT_CONFIG(x)                ((g_eeGeneral.potsConfig >> (2*((x)-POT1)))&0x03)
   #define IS_POT_MULTIPOS(x)           (IS_POT(x) && POT_CONFIG(x)==POT_MULTIPOS_SWITCH)
   #define IS_POT_WITHOUT_DETENT(x)     (IS_POT(x) && POT_CONFIG(x)==POT_WITHOUT_DETENT)
   #define IS_POT_AVAILABLE(x)          (IS_POT(x) && POT_CONFIG(x)!=POT_NONE)
   #define IS_POT_SLIDER_AVAILABLE(x)   (IS_POT_AVAILABLE(x))
   #define IS_MULTIPOS_CALIBRATED(cal)  (cal->count>0 && cal->count<XPOTS_MULTIPOS_COUNT)
+#elif defined(PCBTANGO)
+  #define IS_POT_MULTIPOS(x)           (false)
+  #define IS_POT_WITHOUT_DETENT(x)     (false)
+  #define IS_POT_SLIDER_AVAILABLE(x)   (false)
+  #define IS_MULTIPOS_CALIBRATED(cal)  (false)
 #else
   #define IS_POT_MULTIPOS(x)           (false)
   #define IS_POT_WITHOUT_DETENT(x)     (true)
@@ -369,7 +374,7 @@ inline bool SPLASH_NEEDED()
 
 #if defined(PCBHORUS)
   #define SPLASH_TIMEOUT               0 /* we use the splash duration to load stuff from the SD */
-#elif defined(PCBTARANIS)
+#elif defined(PCBTARANIS) || defined(PCBTANGO) || defined(PCBMAMBO)
   #define SPLASH_TIMEOUT               (g_eeGeneral.splashMode == -4 ? 1500 : (g_eeGeneral.splashMode <= 0 ? (400-g_eeGeneral.splashMode * 200) : (400 - g_eeGeneral.splashMode * 100)))
 #else
   #define SPLASH_TIMEOUT               (4 * 100)  // 4 seconds
@@ -432,7 +437,7 @@ bool cmpStrWithZchar(const char * charString, const char * zcharString, int size
 #include "keys.h"
 #include "pwr.h"
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO) || defined(PCBMAMBO)
 div_t switchInfo(int switchPosition);
 extern uint8_t potsPos[NUM_XPOTS];
 #endif
@@ -504,7 +509,7 @@ void evalLogicalSwitches(bool isCurrentFlightmode=true);
 void logicalSwitchesCopyState(uint8_t src, uint8_t dst);
 #define LS_RECURSIVE_EVALUATION_RESET()
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO) || defined(PCBMAMBO)
   void getSwitchesPosition(bool startup);
 #else
   #define getSwitchesPosition(...)
@@ -539,7 +544,7 @@ bool setTrimValue(uint8_t phase, uint8_t idx, int trim);
 
 #if defined(PCBSKY9X)
   #define ROTARY_ENCODER_GRANULARITY (2 << g_eeGeneral.rotarySteps)
-#elif defined(RADIO_FAMILY_T16)
+#elif defined(RADIO_FAMILY_T16) || defined(PCBTANGO) || defined(PCBMAMBO)
   #define ROTARY_ENCODER_GRANULARITY (1)
 #else
   #define ROTARY_ENCODER_GRANULARITY (2)
@@ -978,6 +983,13 @@ enum AUDIO_SOUNDS {
   AU_STICK2_MIDDLE,
   AU_STICK3_MIDDLE,
   AU_STICK4_MIDDLE,
+#if defined(PCBTANGO)
+  AU_AILERON_TRIM,
+  AU_ELEVATOR_TRIM,
+  AU_THROTTLE_TRIM,
+  AU_RUDDER_TRIME,
+  AU_MAIN_MENU,
+#endif
 #if defined(PCBTARANIS) || defined(PCBHORUS)
   AU_POT1_MIDDLE,
   AU_POT2_MIDDLE,
@@ -1141,7 +1153,7 @@ union ReusableBuffer
     int16_t loVals[NUM_STICKS+NUM_POTS+NUM_SLIDERS+STORAGE_NUM_MOUSE_ANALOGS];
     int16_t hiVals[NUM_STICKS+NUM_POTS+NUM_SLIDERS+STORAGE_NUM_MOUSE_ANALOGS];
     uint8_t state;
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO) || defined(PCBMAMBO)
     struct {
       uint8_t stepsCount;
       int16_t steps[XPOTS_MULTIPOS_COUNT];
@@ -1398,6 +1410,12 @@ inline bool isAsteriskDisplayed()
 
   return globalData.unexpectedShutdown;
 }
+
+#if defined(CROSSFIRE_TASK)
+#include "./io/crsf/crsf_write.h"
+#include "./io/crsf/crsf_utilities.h"
+#include "./io/crsf/crossfire.h"
+#endif
 
 #if defined(ACCESS_LIB)
 #include "thirdparty/libACCESS/libAccess.h"

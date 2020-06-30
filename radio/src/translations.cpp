@@ -188,6 +188,26 @@ const char STR_VTRIM[] = TR_VTRIM;
 const char STR_MENUTOSTART[] = TR_MENUTOSTART;
 const char STR_SETMIDPOINT[] = TR_SETMIDPOINT;
 const char STR_MOVESTICKSPOTS[] = TR_MOVESTICKSPOTS;
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+const char STR_LEFT[] = TR_LEFT;
+const char STR_RIGHT[] = TR_RIGHT;
+const char STR_BOTH[] = TR_BOTH;
+const char STR_MOVESTICK_P0[] = TR_MOVESTICK_P0;
+const char STR_MOVESTICK_P1[] = TR_MOVESTICK_P1;
+const char STR_MOVESTICK_P2[] = TR_MOVESTICK_P2;
+const char STR_MOVESTICK_P3[] = TR_MOVESTICK_P3;
+const char STR_MOVESTICK_P4[] = TR_MOVESTICK_P4;
+const char STR_MOVESTICK_P5[] = TR_MOVESTICK_P5;
+const char STR_MOVESTICK_P6[] = TR_MOVESTICK_P6;
+const char STR_MOVESTICK_P7[] = TR_MOVESTICK_P7;
+const char STR_MOVESTICK_P8[] = TR_MOVESTICK_P8;
+const char STR_CAL_POINTS[] = TR_CAL_POINTS;
+const char STR_RELEASE_STICK[] = TR_RELEASE_STICK;
+const char STR_MOVE_PLUS[] = TR_MOVE_PLUS;
+const char STR_JOYSTICK_RF[] = TR_JOYSTICK_RF;
+const char STR_TURN_OFF_RF[] = TR_TURN_OFF_RF;
+const char STR_ROTARY_REVERSE[] = TR_ROTARY_REVERSE;
+#endif
 const char STR_TX[] = TR_TXnRX;
 const char STR_NODATA[] = TR_NODATA;
 const char STR_US[] = TR_US;
@@ -308,6 +328,9 @@ const char STR_RESET_TELEMETRY[] = TR_RESET_TELEMETRY;
 const char STR_STATISTICS[] = TR_STATISTICS;
 const char STR_ABOUT_US[] = TR_ABOUT_US;
 const char STR_USB_JOYSTICK[] = TR_USB_JOYSTICK;
+#if defined(AGENT)
+const char STR_USB_AGENT[]  = TR_USB_AGENT;
+#endif
 const char STR_USB_MASS_STORAGE[] = TR_USB_MASS_STORAGE;
 const char STR_USB_SERIAL[] = TR_USB_SERIAL;
 const char STR_SETUP_SCREENS[] = TR_SETUP_SCREENS;
@@ -656,12 +679,16 @@ const char STR_MENUCUSTOMSCRIPTS[] = TR_MENUCUSTOMSCRIPTS;
 
 const char STR_MENUTELEMETRY[] = TR_MENUTELEMETRY;
 
-#if defined(DSM2) || defined(PXX)
+#if defined(DSM2) || defined(PXX) || defined(PCBTANGO) || defined (PCBMAMBO)
 const char STR_RECEIVER_NUM[] = TR_RECEIVER_NUM;
 const char STR_RECEIVER[] = TR_RECEIVER;
 const char STR_REBIND[] = TR_REBIND;
 const char STR_REG_OK[] = TR_REG_OK;
 const char STR_BIND_OK[] = TR_BIND_OK;
+#endif
+
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+const char STR_CROSSFIRE[] = TR_CROSSFIRE;
 #endif
 
 const char STR_MULTI_CUSTOM[] = TR_MULTI_CUSTOM;
@@ -741,6 +768,14 @@ const char STR_ABOUT_OPENTX_2[] = TR_ABOUT_OPENTX_2;
 const char STR_ABOUT_OPENTX_3[] = TR_ABOUT_OPENTX_3;
 const char STR_ABOUT_OPENTX_4[] = TR_ABOUT_OPENTX_4;
 const char STR_ABOUT_OPENTX_5[] = TR_ABOUT_OPENTX_5;
+
+#if defined(PCBTANGO) || defined (PCBMAMBO)
+const char STR_ABOUT_FREEDOMTX_1[]  = TR_ABOUT_FREEDOMTX_1;
+const char STR_ABOUT_FREEDOMTX_2[]  = TR_ABOUT_FREEDOMTX_2;
+const char STR_ABOUT_FREEDOMTX_3[]  = TR_ABOUT_FREEDOMTX_3;
+const char STR_ABOUT_FREEDOMTX_4[]  = TR_ABOUT_FREEDOMTX_4;
+const char STR_ABOUT_FREEDOMTX_5[]  = TR_ABOUT_FREEDOMTX_5;
+#endif
 
 const char STR_ABOUT_BERTRAND_1[] = TR_ABOUT_BERTRAND_1;
 const char STR_ABOUT_BERTRAND_2[] = TR_ABOUT_BERTRAND_2;

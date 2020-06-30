@@ -28,7 +28,26 @@
 
 #define MENUS_SCROLLBAR_WIDTH          0
 
-#if defined(NAVIGATION_X7)
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+#define DEFAULT_SCROLLBAR_X            (LCD_W-1)
+#define NUM_BODY_LINES                 (LCD_LINES-1)
+#define MENU_HEADER_HEIGHT             FH
+#define CHECK_FLAG_NO_SCREEN_INDEX     1
+
+#if LCD_DEPTH > 1
+#define GREY(x)                        ((x) * 0x010000)
+#define WHITE                          GREY(0xf)
+#define GREY_DEFAULT                   GREY(11)
+#endif
+
+#if LCD_DEPTH > 1
+#define FILL_WHITE                     0x10
+#endif
+
+void menuChannelsView(event_t event);
+#endif
+
+#if defined(NAVIGATION_X7) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
   #define HEADER_LINE                  0
   #define HEADER_LINE_COLUMNS
 #else
@@ -42,9 +61,16 @@
 #define NUM_BODY_LINES                 (LCD_LINES-1)
 #define MENU_HEADER_HEIGHT             FH
 
+#if defined(PCBTANGO)
+#define CURVE_LCD_H                    (64)
+#define CURVE_SIDE_WIDTH               (CURVE_LCD_H/2)
+#define CURVE_CENTER_X                 (LCD_W-CURVE_SIDE_WIDTH-2)
+#define CURVE_CENTER_Y                 (LCD_H/2)
+#else
 #define CURVE_SIDE_WIDTH               (LCD_H/2)
 #define CURVE_CENTER_X                 (LCD_W-CURVE_SIDE_WIDTH-2)
 #define CURVE_CENTER_Y                 (LCD_H/2)
+#endif
 
 #define MIXES_2ND_COLUMN               (12*FW)
 
@@ -137,7 +163,7 @@ int checkIncDec(event_t event, int val, int i_min, int i_max, unsigned int i_fla
 #define CHECK_INCDEC_GENVAR(event, var, min, max) \
   var = checkIncDecGen(event, var, min, max)
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined (PCBMAMBO)
 #define CURSOR_ON_LINE()               (menuHorizontalPosition < 0)
 #else
 #define CURSOR_ON_LINE()               (0)
@@ -260,7 +286,7 @@ void menuChannelsViewCommon(event_t event);
 #endif
 
 // TODO enum
-#if defined(PCBX7) || defined(PCBX9LITE)
+#if defined(PCBX7) || defined(PCBX9LITE) || defined(PCBMAMBO)
 #define EDIT_MODE_INIT                 0
 #else
 #define EDIT_MODE_INIT                 -1
@@ -289,6 +315,17 @@ extern const unsigned char sticks[] ;
 void drawSplash();
 void drawSecondSplash();
 void drawScreenIndex(uint8_t index, uint8_t count, uint8_t attr);
+#if (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
+typedef enum {
+  MAINSCREEN_GRAPHICS_NONE = 0,
+  MAINSCREEN_GRAPHICS_STICKS = 0x01,
+  MAINSCREEN_GRAPHICS_POTS = 0x02,
+  MAINSCREEN_GRAPHICS_ALL = 0xFF
+} MainScreenGraphicsView;
+void drawGauge(coord_t x, coord_t y, coord_t w, coord_t h, int32_t val, int32_t max);
+void drawDownload();
+void doMainScreenGraphics( uint8_t enable_view, uint32_t ptr );
+#endif
 void drawStick(coord_t centrex, int16_t xval, int16_t yval);
 void drawPotsBars();
 void doMainScreenGraphics();

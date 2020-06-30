@@ -34,6 +34,13 @@ PACK(union SportTelemetryPacket
   uint8_t raw[8];
 });
 
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+void sportProcessPacket(uint8_t * packet);
+bool isSportOutputBufferAvailable();
+void sportOutputPushPacket(SportTelemetryPacket * packet);
+void sportFlashDevice(ModuleIndex module, const char * filename);
+#endif
+
 #if defined(STM32)
 bool isBootloader(const char * filename);
 void bootloaderFlash(const char * filename);

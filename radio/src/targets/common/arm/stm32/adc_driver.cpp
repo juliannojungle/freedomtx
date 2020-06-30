@@ -48,6 +48,10 @@
   const int8_t adcDirection[NUM_ANALOGS] = {-1,1,-1,1,  1,1,  1};
 #elif defined(PCBXLITE)
   const int8_t adcDirection[NUM_ANALOGS] = {1,-1,-1,1,  -1,1,  1,  1};
+#elif defined(PCBTANGO)
+  const int8_t adcDirection[NUM_ANALOGS] = {1,1,1,1,  1,1};
+#elif defined(PCBMAMBO)
+  const int8_t adcDirection[NUM_ANALOGS] = {1,1,1,1,  1,1,  1,1,1,1,  1,1,1};
 #endif
 
 #if NUM_PWMSTICKS > 0
@@ -57,6 +61,12 @@
   #define FIRST_ANALOG_ADC             0
   #define NUM_ANALOGS_ADC              11
   #define NUM_ANALOGS_ADC_EXT          (NUM_ANALOGS - NUM_ANALOGS_ADC)
+#elif defined(PCBTANGO)
+  #define FIRST_ANALOG_ADC             TX_VOLTAGE
+  #define NUM_ANALOGS_ADC              (NUM_ANALOGS - FIRST_ANALOG_ADC)
+#elif defined(PCBMAMBO)
+  #define FIRST_ANALOG_ADC             POT1
+  #define NUM_ANALOGS_ADC              (NUM_ANALOGS - FIRST_ANALOG_ADC)
 #else
   #define FIRST_ANALOG_ADC             0
   #define NUM_ANALOGS_ADC              NUM_ANALOGS
@@ -130,6 +140,12 @@ void adcInit()
 #elif defined(PCBX9D) || defined(PCBX9DP)
   ADC_MAIN->SQR2 = (ADC_CHANNEL_POT3 << 0) + (ADC_CHANNEL_SLIDER1 << 5) + (ADC_CHANNEL_SLIDER2 << 10) + (ADC_CHANNEL_BATT << 15) + (ADC_Channel_Vbat << 20);
   ADC_MAIN->SQR3 = (ADC_CHANNEL_STICK_LH << 0) + (ADC_CHANNEL_STICK_LV << 5) + (ADC_CHANNEL_STICK_RV << 10) + (ADC_CHANNEL_STICK_RH << 15) + (ADC_CHANNEL_POT1 << 20) + (ADC_CHANNEL_POT2 << 25);
+#elif defined(PCBTANGO)
+  ADC_MAIN->SQR2 = 0;
+  ADC_MAIN->SQR3 = (ADC_CHANNEL_BATT<<0) + (ADC_CHANNEL_RTC<<5); // conversion 1 to 2
+#elif defined(PCBMAMBO)
+  ADC_MAIN->SQR2 = (ADC_CHANNEL_TRIM << 0) + (ADC_CHANNEL_BATT << 5) + (ADC_Channel_Vbat << 10);
+  ADC_MAIN->SQR3 = (ADC_CHANNEL_POT1 << 0) + (ADC_CHANNEL_POT2 << 5) + (ADC_CHANNEL_SWITCH_B << 10) + (ADC_CHANNEL_SWITCH_C << 15) + (ADC_CHANNEL_SWITCH_D << 20) + (ADC_CHANNEL_SWITCH_E << 25);
 #endif
 
   ADC_MAIN->SMPR1 = (ADC_SAMPTIME << 0) + (ADC_SAMPTIME << 3) + (ADC_SAMPTIME << 6) + (ADC_SAMPTIME << 9) + (ADC_SAMPTIME << 12) + (ADC_SAMPTIME << 15) + (ADC_SAMPTIME << 18) + (ADC_SAMPTIME << 21) + (ADC_SAMPTIME << 24);

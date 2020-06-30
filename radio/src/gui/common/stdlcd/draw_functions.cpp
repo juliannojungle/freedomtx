@@ -138,8 +138,19 @@ void editName(coord_t x, coord_t y, char * name, uint8_t size, event_t event, ui
     uint8_t cur = editNameCursorPos;
     if (s_editMode > 0) {
       int8_t c = name[cur];
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+      if (!(attr & ZCHAR)) {
+        c = char2zchar(c);
+      }
+#endif
       int8_t v = c;
 
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+      if (IS_NEXT_EVENT(event) || IS_PREVIOUS_EVENT(event)) {
+        v = checkIncDec(event, abs(v), 0, ZCHAR_MAX, 0);
+        if (c <= 0) v = -v;
+      }
+#else
       if (IS_NEXT_EVENT(event) || IS_PREVIOUS_EVENT(event)) {
         if (attr == ZCHAR) {
           v = checkIncDec(event, abs(v), 0, ZCHAR_MAX, 0);
@@ -149,6 +160,7 @@ void editName(coord_t x, coord_t y, char * name, uint8_t size, event_t event, ui
           v = checkIncDec(event, abs(v), '0', 'z', 0);
         }
       }
+#endif
 
       switch (event) {
         case EVT_KEY_BREAK(KEY_ENTER):
@@ -180,7 +192,17 @@ void editName(coord_t x, coord_t y, char * name, uint8_t size, event_t event, ui
 #else
         case EVT_KEY_LONG(KEY_ENTER):
 #endif
-
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+          if (v == 0) {
+            s_editMode = 0;
+            killEvents(event);
+          }
+          if (v >= -26 && v <= 26) {
+            v = -v; // toggle case
+            killAllEvents();
+          }
+          break;
+#else
           if (attr & ZCHAR) {
 #if defined(PCBTARANIS) && !defined(PCBXLITE)
             if (v == 0) {
@@ -208,6 +230,7 @@ void editName(coord_t x, coord_t y, char * name, uint8_t size, event_t event, ui
               v = 'A' + v - 'a'; // toggle case
             }
           }
+#endif
 #if defined(NAVIGATION_9X)
           if (event==EVT_KEY_LONG(KEY_LEFT))
             killEvents(KEY_LEFT);
@@ -216,16 +239,25 @@ void editName(coord_t x, coord_t y, char * name, uint8_t size, event_t event, ui
       }
 
       if (c != v) {
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+        if (!(attr & ZCHAR)) {
+          if (v != '\0' || name[cur+1] != '\0')
+            v = zchar2char(v);
+        }
+#endif
         name[cur] = v;
         storageDirty(isModelMenuDisplayed() ? EE_MODEL : EE_GENERAL);
       }
-
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+      lcdDrawChar(x+editNameCursorPos*FW, y, zchar2char(v), ERASEBG|INVERS|FIXEDWIDTH);
+#else
       if (attr == ZCHAR) {
         lcdDrawChar(x+editNameCursorPos*FW, y, zchar2char(v), ERASEBG|INVERS|FIXEDWIDTH);
       }
       else {
         lcdDrawChar(x+editNameCursorPos*FW, y, v, ERASEBG|INVERS|FIXEDWIDTH);
       }
+#endif
     }
     else {
       cur = 0;

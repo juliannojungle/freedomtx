@@ -55,7 +55,7 @@
   #define NOBACKUP(...)                __VA_ARGS__
 #endif
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO) || defined(PCBMAMBO)
 typedef uint16_t source_t;
 #else
 typedef uint8_t source_t;
@@ -290,7 +290,7 @@ PACK(struct FrSkyLineData {
   source_t sources[NUM_LINE_ITEMS];
 });
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO) || defined(PCBMAMBO)
 PACK(struct TelemetryScriptData {
   char    file[LEN_SCRIPT_FILENAME];
   int16_t inputs[MAX_TELEM_SCRIPT_INPUTS];
@@ -300,7 +300,7 @@ PACK(struct TelemetryScriptData {
 union TelemetryScreenData {
   FrSkyBarData  bars[4];
   FrSkyLineData lines[4];
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO) || defined(PCBMAMBO)
   TelemetryScriptData script;
 #endif
 };
@@ -513,6 +513,10 @@ typedef uint16_t swarnenable_t; // TODO remove it in 2.4
 typedef uint16_t swconfig_t;
 typedef uint16_t swarnstate_t;
 typedef uint8_t swarnenable_t; // TODO remove it in 2.4
+#elif defined(PCBTANGO) || defined(PCBMAMBO)
+typedef uint16_t swconfig_t;
+typedef uint16_t swarnstate_t;
+typedef uint8_t swarnenable_t;
 #else
 typedef uint8_t swarnstate_t;
 typedef uint8_t swarnenable_t;
@@ -554,7 +558,7 @@ PACK(struct CustomScreenData {
   #define TOPBAR_DATA
 #endif
 
-#if defined(PCBHORUS) || defined(PCBTARANIS)
+#if defined(PCBHORUS) || defined(PCBTARANIS) || defined(PCBTANGO) || defined(PCBMAMBO)
   #define SCRIPT_DATA \
     NOBACKUP(ScriptData scriptsData[MAX_SCRIPTS]);
 #else
@@ -695,6 +699,27 @@ PACK(struct TrainerData {
     char switchNames[STORAGE_NUM_SWITCHES][LEN_SWITCH_NAME]; \
     char anaNames[NUM_STICKS+STORAGE_NUM_POTS+STORAGE_NUM_SLIDERS][LEN_ANA_NAME]; \
     BLUETOOTH_FIELDS
+#elif defined(PCBTANGO)
+  #define EXTRA_GENERAL_FIELDS \
+      uint8_t  auxSerialMode:4; \
+      uint8_t  slidersConfig:4; \
+      uint8_t  potsConfig; /* two bits per pot */\
+      uint8_t  backlightColor; \
+      swarnstate_t switchUnlockStates; \
+      swconfig_t switchConfig; \
+      char switchNames[STORAGE_NUM_SWITCHES][LEN_SWITCH_NAME]; \
+      char anaNames[NUM_STICKS+STORAGE_NUM_POTS+STORAGE_NUM_SLIDERS][LEN_ANA_NAME]; \
+      NOBACKUP(char currModelFilename[LEN_MODEL_FILENAME+1]);
+#elif defined(PCBMAMBO)
+  #define EXTRA_GENERAL_FIELDS \
+      uint8_t  auxSerialMode:4; \
+      uint8_t  slidersConfig:4; \
+      uint16_t  potsConfig; /* two bits per pot */\
+      swarnstate_t switchUnlockStates; \
+      swconfig_t switchConfig; \
+      char switchNames[STORAGE_NUM_SWITCHES][LEN_SWITCH_NAME]; \
+      char anaNames[NUM_STICKS+STORAGE_NUM_POTS+STORAGE_NUM_SLIDERS][LEN_ANA_NAME]; \
+      NOBACKUP(char currModelFilename[LEN_MODEL_FILENAME+1]);
 #elif defined(PCBSKY9X)
   #define EXTRA_GENERAL_FIELDS \
     int8_t   txCurrentCalibration; \
@@ -725,6 +750,13 @@ PACK(struct TrainerData {
   #define BUZZER_FIELD int8_t buzzerMode:2    // -2=quiet, -1=only alarms, 0=no keys, 1=all (only used on AVR radios without audio hardware)
 #else
   #define BUZZER_FIELD int8_t spare4:2
+#endif
+
+#if defined(ENABLE_ROTARY_REVERSE)
+  #define ROTARY_MODE \
+    NOBACKUP(uint8_t enableRotaryReverse:1);
+#else
+  #define ROTARY_MODE
 #endif
 
 PACK(struct RadioData {
@@ -801,6 +833,8 @@ PACK(struct RadioData {
   char ownerRegistrationID[PXX2_LEN_REGISTRATION_ID];
 
   GYRO_FIELDS
+
+  ROTARY_MODE
 });
 
 #undef SWITCHES_WARNING_DATA
@@ -811,6 +845,7 @@ PACK(struct RadioData {
 #undef SPLASH_MODE
 #undef EXTRA_GENERAL_FIELDS
 #undef THEME_DATA
+#undef ROTARY_MODE
 #undef NOBACKUP
 
 
@@ -888,6 +923,34 @@ static inline void check_struct()
   CHKSIZE(FrSkyBarData, 5);
   CHKSIZE(FrSkyLineData, 2);
   CHKSIZE(ModelHeader, 12);
+  CHKTYPE(CurveData, 4);
+#elif defined(PCBTANGO)
+  CHKSIZE(MixData, 20);
+  CHKSIZE(ExpoData, 17);
+  CHKSIZE(LimitData, 11);
+  CHKSIZE(LogicalSwitchData, 9);
+  CHKSIZE(CustomFunctionData, 9);
+  CHKSIZE(FlightModeData, 36);
+  CHKSIZE(TimerData, 11);
+  CHKSIZE(SwashRingData, 8);
+  CHKSIZE(FrSkyBarData, 6);
+  CHKSIZE(FrSkyLineData, 4);
+  CHKTYPE(union TelemetryScreenData, 24);
+  CHKSIZE(ModelHeader, 22);
+  CHKSIZE(CurveData, 4);
+#elif defined(PCBMAMBO)
+  CHKSIZE(MixData, 20);
+  CHKSIZE(ExpoData, 17);
+  CHKSIZE(LimitData, 11);
+  CHKSIZE(LogicalSwitchData, 9);
+  CHKSIZE(CustomFunctionData, 9);
+  CHKSIZE(FlightModeData, 36);
+  CHKSIZE(TimerData, 11);
+  CHKSIZE(SwashRingData, 8);
+  CHKSIZE(FrSkyBarData, 6);
+  CHKSIZE(FrSkyLineData, 4);
+  CHKTYPE(union TelemetryScreenData, 24);
+  CHKSIZE(ModelHeader, 22);
   CHKTYPE(CurveData, 4);
 #else
   // Common for all variants

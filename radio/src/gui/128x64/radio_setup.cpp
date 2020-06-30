@@ -34,6 +34,12 @@ const unsigned char sticks[]  = {
   value = editChoice(RADIO_SETUP_2ND_COLUMN, y, label, nullptr, tmp, -2, +2, attr, event); \
 }
 
+#if defined(PCBTANGO)
+  #define CASE_CONTRAST(x)
+#else
+  #define CASE_CONTRAST(x) x,
+#endif
+
 #if defined(SPLASH)
   #define CASE_SPLASH_PARAM(x) x,
 #else
@@ -44,6 +50,12 @@ const unsigned char sticks[]  = {
   #define CASE_BATTGRAPH(x) x,
 #else
   #define CASE_BATTGRAPH(x)
+#endif
+
+#if defined(ENABLE_ROTARY_REVERSE)
+  #define CASE_ROTARY_REVERSE(x) x,
+#else
+  #define CASE_ROTARY_REVERSE(x)
 #endif
 
 enum {
@@ -71,7 +83,7 @@ enum {
   CASE_GYRO(ITEM_RADIO_SETUP_GYRO_LABEL)
   CASE_GYRO(ITEM_RADIO_SETUP_GYRO_MAX)
   CASE_GYRO(ITEM_RADIO_SETUP_GYRO_OFFSET)
-  ITEM_RADIO_SETUP_CONTRAST,
+  CASE_CONTRAST(ITEM_RADIO_SETUP_CONTRAST)
   ITEM_RADIO_SETUP_ALARMS_LABEL,
   ITEM_RADIO_SETUP_BATTERY_WARNING,
   CASE_CAPACITY(ITEM_RADIO_SETUP_CAPACITY_WARNING)
@@ -103,6 +115,7 @@ enum {
   ITEM_RADIO_SETUP_RX_CHANNEL_ORD,
   ITEM_RADIO_SETUP_STICK_MODE_LABELS,
   ITEM_RADIO_SETUP_STICK_MODE,
+  CASE_ROTARY_REVERSE(ITEM_RADIO_SETUP_ROTARY_REVERSE)
   ITEM_RADIO_SETUP_MAX
 };
 
@@ -151,7 +164,7 @@ void menuRadioSetup(event_t event)
     CASE_GYRO(LABEL(GYRO))
     CASE_GYRO(0)
     CASE_GYRO(0)
-    0, LABEL(ALARMS), 0, CASE_CAPACITY(0)
+    CASE_CONTRAST(0) LABEL(ALARMS), 0, CASE_CAPACITY(0)
     0, 0, 0, 0,
     LABEL(BACKLIGHT), 0, 0, 0, CASE_PWM_BACKLIGHT(0)
     CASE_PWM_BACKLIGHT(0)
@@ -168,7 +181,9 @@ void menuRadioSetup(event_t event)
     0,
     CASE_STM32(0) // USB mode
     CASE_JACK_DETECT(0) // Jack mode
-    0, COL_TX_MODE, 0, 1/*to force edit mode*/});
+    0, COL_TX_MODE, 0, 
+    CASE_ROTARY_REVERSE(0)
+    1/*to force edit mode*/});
 
   if (event == EVT_ENTRY) {
     reusableBuffer.generalSettings.stickMode = g_eeGeneral.stickMode;
@@ -251,9 +266,17 @@ void menuRadioSetup(event_t event)
         putsVolts(lcdLastRightPos+FW, y, 120+g_eeGeneral.vBatMax, (menuHorizontalPosition>0 ? attr : 0)|LEFT|NO_UNIT);
         if (attr && s_editMode>0) {
           if (menuHorizontalPosition==0)
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+            CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMin, -60, g_eeGeneral.vBatMax+29); // min=3.0V
+#else
             CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMin, -50, g_eeGeneral.vBatMax+29); // min=4.0V
+#endif
           else
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+            CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMax, g_eeGeneral.vBatMin-29, -60); // max=6.0V
+#else
             CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMax, g_eeGeneral.vBatMin-29, +40); // max=16.0V
+#endif
         }
         break;
 #endif
@@ -395,6 +418,7 @@ void menuRadioSetup(event_t event)
         break;
 #endif
 
+#if !defined(PCBTANGO)
       case ITEM_RADIO_SETUP_CONTRAST:
         lcdDrawTextAlignedLeft(y, STR_CONTRAST);
         lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.contrast, attr|LEFT);
@@ -403,6 +427,7 @@ void menuRadioSetup(event_t event)
           lcdSetContrast();
         }
         break;
+#endif
 
       case ITEM_RADIO_SETUP_ALARMS_LABEL:
         lcdDrawTextAlignedLeft(y, STR_ALARMS_LABEL);
@@ -411,7 +436,11 @@ void menuRadioSetup(event_t event)
       case ITEM_RADIO_SETUP_BATTERY_WARNING:
         lcdDrawTextAlignedLeft(y, STR_BATTERYWARNING);
         putsVolts(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.vBatWarn, attr|LEFT);
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+        if(attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatWarn, 30, 42);  //3-4.2V
+#else
         if(attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatWarn, 40, 120); //4-12V
+#endif
         break;
 
       case ITEM_RADIO_SETUP_MEMORY_WARNING:
@@ -456,6 +485,10 @@ void menuRadioSetup(event_t event)
 
       case ITEM_RADIO_SETUP_BACKLIGHT_MODE:
         g_eeGeneral.backlightMode = editChoice(RADIO_SETUP_2ND_COLUMN, y, INDENT TR_MODE, STR_VBLMODE, g_eeGeneral.backlightMode, e_backlight_mode_off, e_backlight_mode_on, attr, event);
+#if defined(PCBTANGO)
+        if(g_eeGeneral.backlightMode == e_backlight_mode_off)
+          g_eeGeneral.backlightMode = e_backlight_mode_keys;
+#endif
         break;
 
       case ITEM_RADIO_SETUP_FLASH_BEEP:
@@ -466,7 +499,11 @@ void menuRadioSetup(event_t event)
         lcdDrawTextAlignedLeft(y, STR_BLDELAY);
         lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.lightAutoOff*5, attr|LEFT);
         lcdDrawChar(lcdLastRightPos, y, 's');
+#if defined(BACKLIGHT_TIMEOUT_MIN)
+        if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.lightAutoOff, BACKLIGHT_TIMEOUT_MIN, 600/5);
+#else
         if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.lightAutoOff, 0, 600/5);
+#endif
         break;
 
       case ITEM_RADIO_SETUP_BRIGHTNESS:
@@ -644,6 +681,12 @@ void menuRadioSetup(event_t event)
           waitKeysReleased();
         }
         break;
+
+#if defined(ENABLE_ROTARY_REVERSE)
+      case ITEM_RADIO_SETUP_ROTARY_REVERSE:
+        g_eeGeneral.enableRotaryReverse = editCheckBox(g_eeGeneral.enableRotaryReverse, RADIO_SETUP_2ND_COLUMN, y, STR_ROTARY_REVERSE, attr, event);
+        break;
+#endif
     }
   }
 }

@@ -36,14 +36,18 @@ void pwrInit()
 #endif
 
   // Internal module power
+#if defined(INTMODULE_PWR_GPIO_PIN)
   GPIO_ResetBits(INTMODULE_PWR_GPIO, INTMODULE_PWR_GPIO_PIN);
   GPIO_InitStructure.GPIO_Pin = INTMODULE_PWR_GPIO_PIN;
   GPIO_Init(INTMODULE_PWR_GPIO, &GPIO_InitStructure);
+#endif
 
   // External module power
+#if defined(EXTMODULE_PWR_GPIO_PIN)
   EXTERNAL_MODULE_PWR_OFF();
   GPIO_InitStructure.GPIO_Pin = EXTMODULE_PWR_GPIO_PIN;
   GPIO_Init(EXTMODULE_PWR_GPIO, &GPIO_InitStructure);
+#endif
 
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
 
@@ -103,7 +107,11 @@ void pwrOff()
 
 bool pwrPressed()
 {
+#if defined PWR_SWITCH_PIN_ACTIVE_HIGH
+  return GPIO_ReadInputDataBit(PWR_SWITCH_GPIO, PWR_SWITCH_GPIO_PIN) == Bit_SET;
+#else
   return GPIO_ReadInputDataBit(PWR_SWITCH_GPIO, PWR_SWITCH_GPIO_PIN) == Bit_RESET;
+#endif
 }
 
 void pwrResetHandler()

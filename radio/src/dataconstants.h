@@ -72,6 +72,18 @@
   #define MAX_INPUTS                   32
   #define MAX_TRAINER_CHANNELS         16
   #define MAX_TELEMETRY_SENSORS        40
+#elif defined(PCBTANGO) || defined(PCBMAMBO)
+  #define MAX_MODELS                   60
+  #define MAX_OUTPUT_CHANNELS          32 // number of real output channels CH1-CH32
+  #define MAX_FLIGHT_MODES             9
+  #define MAX_MIXERS                   64
+  #define MAX_EXPOS                    64
+  #define MAX_LOGICAL_SWITCHES         64
+  #define MAX_SPECIAL_FUNCTIONS        64 // number of functions assigned to switches
+  #define MAX_SCRIPTS                  7
+  #define MAX_INPUTS                   32
+  #define MAX_TRAINER_CHANNELS         0
+  #define MAX_TELEMETRY_SENSORS        60
 #elif defined(PCBSKY9X)
   #define MAX_MODELS                   60
   #define MAX_OUTPUT_CHANNELS          32 // number of real output channels CH1-CH32
@@ -123,6 +135,18 @@ enum CurveType {
   #define LEN_FUNCTION_NAME            8
   #define MAX_CURVES                   32
   #define MAX_CURVE_POINTS             512
+#elif defined(PCBTANGO)  || defined(PCBMAMBO)
+  #define LEN_MODEL_NAME               10
+  #define LEN_TIMER_NAME               3
+  #define LEN_FLIGHT_MODE_NAME         6
+  #define LEN_BITMAP_NAME              10
+  #define LEN_EXPOMIX_NAME             6
+  #define LEN_CHANNEL_NAME             4
+  #define LEN_INPUT_NAME               3
+  #define LEN_CURVE_NAME               3
+  #define LEN_FUNCTION_NAME            6
+  #define MAX_CURVES                   16   // TODO next EEPROM check if can be changed to 32 to have all ARM the same
+  #define MAX_CURVE_POINTS             512
 #else
   #define LEN_MODEL_NAME               10
   #define LEN_TIMER_NAME               3
@@ -136,7 +160,7 @@ enum CurveType {
   #define MAX_CURVE_POINTS             512
 #endif
 
-#if defined(PCBTARANIS) || defined(PCBSKY9X) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBSKY9X) || defined(PCBHORUS) || defined(PCBTANGO) || defined(PCBMAMBO)
   #define NUM_MODULES                  2
 #else
   #define NUM_MODULES                  1
@@ -200,6 +224,11 @@ enum TrainerMode {
   TRAINER_MODE_SLAVE_BLUETOOTH,
   TRAINER_MODE_MULTI,
 };
+#elif defined(PCBTANGO) || defined(PCBMAMBO)
+  enum ModuleIndex {
+    INTERNAL_MODULE,
+    EXTERNAL_MODULE
+  };
 #elif defined(PCBSKY9X)
   enum ModuleIndex {
     EXTERNAL_MODULE,
@@ -254,6 +283,7 @@ enum UartModes {
 #else
   #define LEN_SWITCH_NAME              3
   #define LEN_ANA_NAME                 3
+  #define LEN_MODEL_FILENAME           16
   #define LEN_BLUETOOTH_NAME           10
 #endif
 
@@ -339,7 +369,7 @@ enum TelemetryUnit {
   #define NUM_LINE_ITEMS 2
 #endif
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO) || defined(PCBMAMBO)
   #define MAX_TELEM_SCRIPT_INPUTS  8
 #endif
 
@@ -602,8 +632,11 @@ enum MixSources {
   MIXSRC_Ele,                           LUA_EXPORT("ele", "Elevator")
   MIXSRC_Thr,                           LUA_EXPORT("thr", "Throttle")
   MIXSRC_Ail,                           LUA_EXPORT("ail", "Aileron")
-
+#if defined(PCBTANGO)
+  MIXSRC_FIRST_POT = MIXSRC_Ail,
+#else
   MIXSRC_FIRST_POT,
+#endif
 #if defined(PCBHORUS)
   MIXSRC_S1 = MIXSRC_FIRST_POT,         LUA_EXPORT("s1", "Potentiometer S1")
   MIXSRC_6POS,                          LUA_EXPORT("6pos", "Multipos Switch")
@@ -649,6 +682,12 @@ enum MixSources {
   MIXSRC_SLIDER1 = MIXSRC_FIRST_SLIDER, LUA_EXPORT("ls", "Left slider")
   MIXSRC_SLIDER2,                       LUA_EXPORT("rs", "Right slider")
   MIXSRC_LAST_POT = MIXSRC_SLIDER2,
+#elif defined(PCBTANGO)
+  MIXSRC_LAST_POT = MIXSRC_FIRST_POT,
+#elif defined(PCBMAMBO)
+  MIXSRC_P1 = MIXSRC_FIRST_POT,
+  MIXSRC_P2,
+  MIXSRC_LAST_POT = MIXSRC_P2,
 #else
   MIXSRC_P1 = MIXSRC_FIRST_POT,
   MIXSRC_P2,

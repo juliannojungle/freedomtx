@@ -510,10 +510,20 @@ int setTelemetryValue(TelemetryProtocol protocol, uint16_t id, uint8_t subId, ui
   if (index >= 0) {
     switch (protocol) {
       case PROTOCOL_TELEMETRY_FRSKY_SPORT:
+#if defined(PCBTANGO)
+        if(IS_PCBREV_02() && IS_EXTERNAL_MODULE_ENABLED())
+          frskySportSetDefault(index, id, subId, instance);
+#else
         frskySportSetDefault(index, id, subId, instance);
+#endif
         break;
       case PROTOCOL_TELEMETRY_FRSKY_D:
+#if defined(PCBTANGO)
+        if(IS_PCBREV_02() && IS_EXTERNAL_MODULE_ENABLED())
+          frskyDSetDefault(index, id);
+#else
         frskyDSetDefault(index, id);
+#endif
         break;
 #if defined(CROSSFIRE)
       case PROTOCOL_TELEMETRY_CROSSFIRE:

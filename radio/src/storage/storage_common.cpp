@@ -61,6 +61,8 @@ void postRadioSettingsLoad()
   if (is_memclear(g_eeGeneral.ownerRegistrationID, PXX2_LEN_REGISTRATION_ID)) {
     setDefaultOwnerId();
   }
+#elif (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
+  loadDefaultRadioSettings();
 #endif
 }
 

@@ -189,6 +189,8 @@ template<int SIZE>
   #define RTOS_CREATE_TASK(taskId, task, name, stackStruct, stackSize, priority)   \
                                         taskId = CoCreateTask(task, NULL, priority, &stackStruct.stack[stackSize-1], stackSize)
 
+  #define RTOS_DEL_TASK(taskId) CoDelTask(taskId)
+
 #ifdef __cplusplus
   static inline void RTOS_CREATE_MUTEX(OS_MutexID &mutex)
   {

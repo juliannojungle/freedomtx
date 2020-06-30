@@ -50,6 +50,10 @@
   #include "lua/lua_exports_xlite.inc"
 #elif defined(PCBTARANIS)
   #include "lua/lua_exports_x9d.inc"
+#elif defined(PCBTANGO)
+  #include "lua/lua_exports_tango.inc"
+#elif defined(PCBMAMBO)
+  #include "lua/lua_exports_mambo.inc"
 #endif
 
 #if defined(SIMU)
@@ -447,6 +451,26 @@ When called without parameters, it will only return the status of the output buf
 
 static int luaSportTelemetryPush(lua_State * L)
 {
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+  if (!IS_EXTERNAL_MODULE_ENABLED()) {
+    if (lua_gettop(L) == 0) {
+      lua_pushboolean(L, isSportOutputBufferAvailable());
+    }
+    else if (isSportOutputBufferAvailable()) {
+      SportTelemetryPacket packet;
+      packet.physicalId = getDataId(luaL_checkunsigned(L, 1));
+      packet.primId = luaL_checkunsigned(L, 2);
+      packet.dataId = luaL_checkunsigned(L, 3);
+      packet.value = luaL_checkunsigned(L, 4);
+      sportOutputPushPacket(&packet);
+      lua_pushboolean(L, true);
+    }
+    else {
+      lua_pushboolean(L, false);
+    }
+    return 1;
+  }
+#endif
   if (!IS_FRSKY_SPORT_PROTOCOL()) {
     lua_pushnil(L);
     return 1;
@@ -649,6 +673,37 @@ When called without parameters, it will only return the status of the output buf
 */
 static int luaCrossfireTelemetryPush(lua_State * L)
 {
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+  if (!IS_EXTERNAL_MODULE_ENABLED()) {
+    if (lua_gettop(L) == 0) {
+      lua_pushboolean(L, isCrossfireOutputBufferAvailable());
+    }
+    else if (isCrossfireOutputBufferAvailable()) {
+      uint8_t command = luaL_checkunsigned(L, 1);
+      luaL_checktype(L, 2, LUA_TTABLE);
+      uint8_t length = luaL_len(L, 2);
+      outputTelemetryBuffer.pushByte(MODULE_ADDRESS);
+      outputTelemetryBuffer.pushByte(2 + length); // 1(COMMAND) + data length + 1(CRC)
+      outputTelemetryBuffer.pushByte(command); // COMMAND
+      for (int i = 0; i < length; i++) {
+        lua_rawgeti(L, 2, i + 1);
+        outputTelemetryBuffer.pushByte(luaL_checkunsigned(L, -1));
+      }
+      outputTelemetryBuffer.pushByte(crc8(outputTelemetryBuffer.data + 2, 1 + length));
+      telemetryOutputSetTrigger(command);
+#if !defined(SIMU)
+      libCrsf_CRSF_Routing(DEVICE_INTERNAL, outputTelemetryBuffer.data);
+      outputTelemetryBuffer.reset();
+      outputTelemetryBufferTrigger = 0x00;
+#endif
+      lua_pushboolean(L, true);
+    }
+    else {
+      lua_pushboolean(L, false);
+    }
+    return 1;
+  }
+#endif
   if (telemetryProtocol != PROTOCOL_TELEMETRY_CROSSFIRE) {
     lua_pushnil(L);
     return 1;
@@ -679,6 +734,20 @@ static int luaCrossfireTelemetryPush(lua_State * L)
   else {
     lua_pushboolean(L, false);
   }
+  return 1;
+#endif
+}
+
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+static uint8_t devId = 0;
+int luaSetDevId(lua_State* L){
+  devId = lua_tointeger(L, -1);
+  lua_pop(L, 1);
+  return 1;
+}
+
+int luaGetDevId(lua_State* L){
+  lua_pushnumber(L, devId);
   return 1;
 }
 #endif
@@ -1636,6 +1705,10 @@ const luaL_Reg opentxLib[] = {
   { "crossfireTelemetryPop", luaCrossfireTelemetryPop },
   { "crossfireTelemetryPush", luaCrossfireTelemetryPush },
 #endif
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+  { "SetDevId", luaSetDevId },
+  { "GetDevId", luaGetDevId },
+#endif
 #if defined(MULTIMODULE)
   { "multiBuffer", luaMultiBuffer },
 #endif
@@ -1669,13 +1742,17 @@ const luaR_value_entry opentxConstants[] = {
   { "MIXSRC_SB", MIXSRC_SB },
   { "MIXSRC_SC", MIXSRC_SC },
   { "MIXSRC_SD", MIXSRC_SD },
-#if !defined(PCBX7) && !defined(PCBXLITE) && !defined(PCBX9LITE)
+#if !defined(PCBX7) && !defined(PCBXLITE) && !defined(PCBX9LITE) && !defined(PCBTANGO) && !defined (PCBMAMBO)
   { "MIXSRC_SE", MIXSRC_SE },
   { "MIXSRC_SG", MIXSRC_SG },
 #endif
-#if !defined(PCBXLITE) && !defined(PCBX9LITE)
+#if !defined(PCBXLITE) && !defined(PCBX9LITE) && !defined(PCBTANGO) && !defined (PCBMAMBO)
   { "MIXSRC_SF", MIXSRC_SF },
   { "MIXSRC_SH", MIXSRC_SH },
+#endif
+#if defined(PCBTANGO) || defined (PCBMAMBO)
+  { "MIXSRC_SE", MIXSRC_SE },
+  { "MIXSRC_SF", MIXSRC_SF },
 #endif
   { "MIXSRC_CH1", MIXSRC_CH1 },
   { "SWSRC_LAST", SWSRC_LAST_LOGICAL_SWITCH },
@@ -1767,7 +1844,7 @@ const luaR_value_entry opentxConstants[] = {
   { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(KEY_ENTER) },
   { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(KEY_ENTER) },
   { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_EXIT) },
-#elif defined(NAVIGATION_X7) || defined(NAVIGATION_X9D)
+#elif defined(NAVIGATION_X7) || defined(NAVIGATION_X9D) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
   { "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_LONG(KEY_PAGE) },
   { "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_PAGE) },
   { "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MENU) },

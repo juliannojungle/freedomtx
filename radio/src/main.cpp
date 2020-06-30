@@ -33,6 +33,11 @@ void onUSBConnectMenu(const char *result)
   else if (result == STR_USB_JOYSTICK) {
     setSelectedUsbMode(USB_JOYSTICK_MODE);
   }
+#if defined(AGENT)
+  else if (result == STR_USB_AGENT) {
+    setSelectedUsbMode(USB_AGENT_MODE);
+  }
+#endif
   else if (result == STR_USB_SERIAL) {
     setSelectedUsbMode(USB_SERIAL_MODE);
   }
@@ -42,10 +47,17 @@ void onUSBConnectMenu(const char *result)
 void handleUsbConnection()
 {
 #if defined(STM32) && !defined(SIMU)
+  bool additional_popup_trigger = false;
+#if defined(AGENT)
+  additional_popup_trigger = getSelectedUsbMode() == USB_AGENT_MODE ? true : false;
+#endif
   if (!usbStarted() && usbPlugged()) {
-    if (getSelectedUsbMode() == USB_UNSELECTED_MODE) {
+    if (getSelectedUsbMode() == USB_UNSELECTED_MODE || additional_popup_trigger) {
       if (g_eeGeneral.USBMode == USB_UNSELECTED_MODE && popupMenuItemsCount == 0) {
         POPUP_MENU_ADD_ITEM(STR_USB_JOYSTICK);
+#if defined(AGENT)
+        POPUP_MENU_ADD_ITEM(STR_USB_AGENT);
+#endif
         POPUP_MENU_ADD_ITEM(STR_USB_MASS_STORAGE);
 #if defined(DEBUG)
         POPUP_MENU_ADD_ITEM(STR_USB_SERIAL);
@@ -56,10 +68,20 @@ void handleUsbConnection()
         setSelectedUsbMode(g_eeGeneral.USBMode);
       }
     }
-    else {
+
+    if (getSelectedUsbMode() != USB_UNSELECTED_MODE) {
       if (getSelectedUsbMode() == USB_MASS_STORAGE_MODE) {
         opentxClose(false);
         usbPluggedIn();
+#if defined(CROSSFIRE_TASK)
+        crossfireTasksStop();
+        ledOff();
+#endif
+      }
+      else if (getSelectedUsbMode() == USB_JOYSTICK_MODE) {
+#if defined(CROSSFIRE_TASK)
+        crossfireTurnOffRf();
+#endif
       }
       usbStart();
     }
@@ -68,9 +90,19 @@ void handleUsbConnection()
   if (usbStarted() && !usbPlugged()) {
     usbStop();
     if (getSelectedUsbMode() == USB_MASS_STORAGE_MODE) {
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+      boardSetSkipWarning();
+      NVIC_SystemReset();
+#else
       opentxResume();
       putEvent(EVT_ENTRY);
+#endif
     }
+#if defined(CROSSFIRE_TASK)
+    else if (getSelectedUsbMode() == USB_JOYSTICK_MODE) {
+      crossfireTurnOnRf();
+    }
+#endif
     setSelectedUsbMode(USB_UNSELECTED_MODE);
   }
 #endif // defined(STM32) && !defined(SIMU)
@@ -483,7 +515,9 @@ void perMain()
   handleJackConnection();
 #endif
 
+#if !defined(PCBTANGO) && !defined(PCBMAMBO) && !defined(SIMU)
   checkTrainerSettings();
+#endif
   periodicTick();
   DEBUG_TIMER_STOP(debugTimerPerMain1);
 

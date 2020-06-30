@@ -194,6 +194,13 @@ void processCrossfireTelemetryFrame()
   }
 }
 
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+bool isCrossfireOutputBufferAvailable()
+{
+  return outputTelemetryBuffer.size == 0;
+}
+#endif
+
 void processCrossfireTelemetryData(uint8_t data)
 {
 #if defined(AUX_SERIAL)
@@ -202,7 +209,7 @@ void processCrossfireTelemetryData(uint8_t data)
   }
 #endif
 
-  if (telemetryRxBufferCount == 0 && data != RADIO_ADDRESS) {
+  if (telemetryRxBufferCount == 0 && (data != RADIO_ADDRESS && data != CRSF_SYNC_BYTE)) {
     TRACE("[XF] address 0x%02X error", data);
     return;
   }

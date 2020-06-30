@@ -19,6 +19,9 @@
  */
 
 #include "opentx.h"
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+#include "storage/modelslist.h"
+#endif
 
 // TODO find why we need this (for REGISTER at least)
 #if defined(PCBXLITE)
@@ -29,7 +32,11 @@
 
 uint8_t g_moduleIdx;
 
-#if defined(PCBTARANIS)
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+bool set_model_id_needed = false;
+#endif
+
+#if defined(PCBTARANIS) || defined(PCBTANGO) || defined(PCBMAMBO)
 uint8_t getSwitchWarningsCount()
 {
   uint8_t count = 0;
@@ -70,7 +77,7 @@ enum MenuModelSetupItems {
   ITEM_MODEL_SETUP_CHECKLIST_DISPLAY,
   ITEM_MODEL_SETUP_THROTTLE_WARNING,
   ITEM_MODEL_SETUP_SWITCHES_WARNING1,
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBMAMBO)
   ITEM_MODEL_SETUP_SWITCHES_WARNING2,
   ITEM_MODEL_SETUP_POTS_WARNING,
 #endif
@@ -154,6 +161,11 @@ enum MenuModelSetupItems {
   ITEM_MODEL_SETUP_TRAINER_CHANNELS,
   ITEM_MODEL_SETUP_TRAINER_PPM_PARAMS,
 #endif
+
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+  ITEM_MODEL_SETUP_CROSSFIRE_LABEL,
+  ITEM_MODEL_SETUP_CROSSFIRE_RECEIVER_ID,
+#endif
   ITEM_MODEL_SETUP_LINES_COUNT
 };
 
@@ -186,6 +198,8 @@ enum MenuModelSetupItems {
 #define MAX_SWITCH_PER_LINE             (getSwitchWarningsCount() > 5 ? 4 : 5)
 #if defined(PCBXLITE)
   #define SW_WARN_ROWS                    uint8_t(NAVIGATION_LINE_BY_LINE|getSwitchWarningsCount()), uint8_t(getSwitchWarningsCount() > 4 ? TITLE_ROW : HIDDEN_ROW) // X-Lite needs an additional column for full line selection (<])
+#elif defined(PCBTANGO)
+  #define SW_WARN_ROWS                    uint8_t(NAVIGATION_LINE_BY_LINE|(getSwitchWarningsCount()-1))
 #else
   #define SW_WARN_ROWS                    uint8_t(NAVIGATION_LINE_BY_LINE|(getSwitchWarningsCount()-1)), uint8_t(getSwitchWarningsCount() > MAX_SWITCH_PER_LINE ? TITLE_ROW : HIDDEN_ROW)
 #endif
@@ -326,11 +340,30 @@ void onBluetoothConnectMenu(const char * result)
   #define INTERNAL_MODULE_ROWS
 #endif
 
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+void checkModelIdUnique(uint8_t moduleIdx)
+{
+  if (isModuleXJTD8(moduleIdx))
+    return;
+
+  char * warn_buf = reusableBuffer.moduleSetup.msg;
+
+  // cannot rely exactly on WARNING_LINE_LEN so using WARNING_LINE_LEN-2
+  size_t warn_buf_len = sizeof(reusableBuffer.moduleSetup.msg) - WARNING_LINE_LEN - 2;
+  if (!modelslist.isModelIdUnique(moduleIdx,warn_buf,warn_buf_len)) {
+    if (warn_buf[0] != 0) {
+      POPUP_WARNING(STR_MODELIDUSED);
+      SET_WARNING_INFO(warn_buf, sizeof(reusableBuffer.moduleSetup.msg), 0);
+    }
+  }
+}
+#endif
+
 void menuModelSetup(event_t event)
 {
   int8_t old_editMode = s_editMode;
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined (PCBTANGO) || defined(PCBMAMBO)
   int8_t old_posHorz = menuHorizontalPosition;
 
   MENU_TAB({
@@ -351,15 +384,17 @@ void menuModelSetup(event_t event)
       0, // Checklist
       0, // Throttle warning
       SW_WARN_ROWS, // Switch warning
+#if defined(PCBTARANIS) || defined(PCBMAMBO)
       POT_WARN_ROWS, // Pot warning
-
+#endif
     NUM_STICKS + NUM_POTS + NUM_SLIDERS - 1, // Center beeps
     0, // Global functions
 
     REGISTRATION_ID_ROWS
-
+#if !defined(PCBTANGO) && !defined(PCBMAMBO)
     INTERNAL_MODULE_ROWS
 
+#endif
     LABEL(ExternalModule),
       MODULE_TYPE_ROWS(EXTERNAL_MODULE),
       MULTIMODULE_SUBTYPE_ROWS(EXTERNAL_MODULE)
@@ -378,6 +413,10 @@ void menuModelSetup(event_t event)
       IF_ACCESS_MODULE_RF(EXTERNAL_MODULE, 0),                     // Receiver 3
 
     TRAINER_ROWS
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+    LABEL(crossfire),
+    0, //crossfire receiver number
+#endif
   });
 #else
   MENU_TAB({
@@ -614,7 +653,7 @@ void menuModelSetup(event_t event)
         g_model.disableThrottleWarning = !editCheckBox(!g_model.disableThrottleWarning, MODEL_SETUP_2ND_COLUMN, y, STR_THROTTLEWARNING, attr, event);
         break;
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBMAMBO)
       case ITEM_MODEL_SETUP_SWITCHES_WARNING2:
         if (i==0) {
           if (CURSOR_MOVED_LEFT(event))
@@ -626,7 +665,7 @@ void menuModelSetup(event_t event)
 #endif
 
       case ITEM_MODEL_SETUP_SWITCHES_WARNING1:
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO) || defined(PCBMAMBO)
         {
           #define FIRSTSW_STR   STR_VSRCRAW+(MIXSRC_FIRST_SWITCH-MIXSRC_Rud+1)*length
           uint8_t switchWarningsCount = getSwitchWarningsCount();
@@ -752,7 +791,7 @@ void menuModelSetup(event_t event)
         break;
       }
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBMAMBO)
       case ITEM_MODEL_SETUP_POTS_WARNING:
         lcdDrawTextAlignedLeft(y, STR_POTWARNING);
         lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN, y, "\004""OFF\0""Man\0""Auto", g_model.potsWarnMode, (menuHorizontalPosition == 0) ? attr : 0);
@@ -918,6 +957,12 @@ void menuModelSetup(event_t event)
             g_model.moduleData[moduleIdx].type = reusableBuffer.moduleSetup.newType;
             reusableBuffer.moduleSetup.previousType = reusableBuffer.moduleSetup.newType;
             setModuleType(moduleIdx, g_model.moduleData[moduleIdx].type);
+#if defined(CROSSFIRE_TASK)
+            if (g_model.moduleData[moduleIdx].type == MODULE_TYPE_NONE)
+              crossfireTurnOnRf();
+            else
+              crossfireTurnOffRf();
+#endif
           }
           else if (g_model.moduleData[moduleIdx].type == MODULE_TYPE_NONE) {
             g_model.moduleData[moduleIdx].type = reusableBuffer.moduleSetup.newType;
@@ -1182,7 +1227,9 @@ void menuModelSetup(event_t event)
           lcdDrawSizedText(MODEL_SETUP_2ND_COLUMN, y, g_model.modelRegistrationID, PXX2_LEN_REGISTRATION_ID, ZCHAR);
         break;
 
+  #if defined(HARDWARE_INTERNAL_MODULE)
       case ITEM_MODEL_SETUP_INTERNAL_MODULE_PXX2_MODEL_NUM:
+  #endif
       case ITEM_MODEL_SETUP_EXTERNAL_MODULE_PXX2_MODEL_NUM:
       {
         lcdDrawText(INDENT_WIDTH, y, STR_RECEIVER_NUM);
@@ -1196,7 +1243,9 @@ void menuModelSetup(event_t event)
       }
       break;
 
+  #if defined(HARDWARE_INTERNAL_MODULE)
       case ITEM_MODEL_SETUP_INTERNAL_MODULE_PXX2_REGISTER_RANGE:
+  #endif
       case ITEM_MODEL_SETUP_EXTERNAL_MODULE_PXX2_REGISTER_RANGE:
       {
         lcdDrawTextAlignedLeft(y, INDENT TR_MODULE);
@@ -1222,7 +1271,9 @@ void menuModelSetup(event_t event)
       }
       break;
 
+  #if defined(HARDWARE_INTERNAL_MODULE)
       case ITEM_MODEL_SETUP_INTERNAL_MODULE_PXX2_OPTIONS:
+  #endif
       case ITEM_MODEL_SETUP_EXTERNAL_MODULE_PXX2_OPTIONS:
         lcdDrawText(INDENT_WIDTH, y, STR_OPTIONS);
         lcdDrawText(MODEL_SETUP_2ND_COLUMN, y, STR_SET, attr);
@@ -1232,9 +1283,11 @@ void menuModelSetup(event_t event)
         }
         break;
 
+  #if defined(HARDWARE_INTERNAL_MODULE)
       case ITEM_MODEL_SETUP_INTERNAL_MODULE_PXX2_RECEIVER_1:
       case ITEM_MODEL_SETUP_INTERNAL_MODULE_PXX2_RECEIVER_2:
       case ITEM_MODEL_SETUP_INTERNAL_MODULE_PXX2_RECEIVER_3:
+  #endif
       case ITEM_MODEL_SETUP_EXTERNAL_MODULE_PXX2_RECEIVER_1:
       case ITEM_MODEL_SETUP_EXTERNAL_MODULE_PXX2_RECEIVER_2:
       case ITEM_MODEL_SETUP_EXTERNAL_MODULE_PXX2_RECEIVER_3:
@@ -1311,7 +1364,11 @@ void menuModelSetup(event_t event)
                 }
                 else if (event == EVT_KEY_LONG(KEY_ENTER)) {
                   killEvents(event);
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+                  uint8_t newVal = modelslist.findNextUnusedModelId(moduleIdx);
+#else
                   uint8_t newVal = findNextUnusedModelId(g_eeGeneral.currModel, moduleIdx);
+#endif
                   if (newVal != g_model.header.modelId[moduleIdx]) {
                     modelHeaders[g_eeGeneral.currModel].modelId[moduleIdx] = g_model.header.modelId[moduleIdx] = newVal;
                     storageDirty(EE_MODEL);
@@ -1678,7 +1735,25 @@ void menuModelSetup(event_t event)
         }
         break;
 #endif
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+      case ITEM_MODEL_SETUP_CROSSFIRE_LABEL:
+        lcdDrawTextAlignedLeft(y, STR_CROSSFIRE);
+        break;
 
+      case ITEM_MODEL_SETUP_CROSSFIRE_RECEIVER_ID: {
+        uint8_t moduleIdx = CURRENT_MODULE_EDITED(k);
+        lcdDrawText(INDENT_WIDTH, y, STR_RECEIVER_NUM);
+        lcdDrawNumber(MODEL_SETUP_2ND_COLUMN, y, g_model.header.modelId[moduleIdx], attr | LEADING0 | LEFT, 2);
+        if (attr) {
+          CHECK_INCDEC_MODELVAR_ZERO(event, g_model.header.modelId[moduleIdx], getMaxRxNum(moduleIdx));
+          if (checkIncDec_Ret) {
+            modelHeaders[g_eeGeneral.currModel].modelId[moduleIdx] = g_model.header.modelId[moduleIdx];
+            set_model_id_needed = true;
+          }
+        }
+        break;
+      }
+#endif
     }
   }
 
@@ -1708,7 +1783,11 @@ void menuModelSetup(event_t event)
       case ITEM_MODEL_SETUP_EXTERNAL_MODULE_NOT_ACCESS_RXNUM_BIND_RANGE:
       case ITEM_MODEL_SETUP_EXTERNAL_MODULE_PXX2_MODEL_NUM:
         if (menuHorizontalPosition == 0)
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+          checkModelIdUnique(EXTERNAL_MODULE);
+#else
           checkModelIdUnique(g_eeGeneral.currModel, EXTERNAL_MODULE);
+#endif
         break;
     }
   }

@@ -91,6 +91,16 @@ void rotaryEncoderCheck()
     }
     state &= ~0x03 ;
     state |= pins ;
+#elif defined(PCBMAMBO)
+  uint8_t newPosition = ROTARY_ENCODER_POSITION();
+  if (newPosition != rotencPosition && !(readKeys() & (1 << KEY_ENTER))) {
+    if ((rotencPosition & 0x01) ^ ((newPosition & 0x02) >> 1)) {
+      ++rotencValue;
+    }
+    else {
+      --rotencValue;
+    }
+    rotencPosition = newPosition;
 #else
   uint8_t newPosition = ROTARY_ENCODER_POSITION();
   if (newPosition != rotencPosition && !(readKeys() & (1 << KEY_ENTER))) {
@@ -123,7 +133,7 @@ extern "C" void ROTARY_ENCODER_EXTI_IRQHandler1(void)
     EXTI_ClearITPendingBit(ROTARY_ENCODER_EXTI_LINE1);
   }
 
-#if !defined(ROTARY_ENCODER_EXTI_IRQn2)
+#if !defined(ROTARY_ENCODER_EXTI_IRQn2) && defined(ROTARY_ENCODER_EXTI_LINE2)
   if (EXTI_GetITStatus(ROTARY_ENCODER_EXTI_LINE2) != RESET) {
     rotaryEncoderStartDelay();
     EXTI_ClearITPendingBit(ROTARY_ENCODER_EXTI_LINE2);
@@ -139,7 +149,7 @@ extern "C" void ROTARY_ENCODER_EXTI_IRQHandler1(void)
 #endif
 }
 
-#if defined(ROTARY_ENCODER_EXTI_IRQn2)
+#if defined(ROTARY_ENCODER_EXTI_IRQn2) && defined(ROTARY_ENCODER_EXTI_LINE2)
 extern "C" void ROTARY_ENCODER_EXTI_IRQHandler2(void)
 {
   if (EXTI_GetITStatus(ROTARY_ENCODER_EXTI_LINE2) != RESET) {

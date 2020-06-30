@@ -22,6 +22,10 @@
 #include "modelslist.h"
 #include "conversions/conversions.h"
 
+#if defined(EEPROM_SDCARD)
+ModelHeader modelHeaders[MAX_MODELS];
+#endif
+
 void getModelPath(char * path, const char * filename)
 {
   strcpy(path, STR_MODELS_PATH);
@@ -131,6 +135,27 @@ const char * readModel(const char * filename, uint8_t * buffer, uint32_t size, u
   return loadFile(path, buffer, size, version);
 }
 
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+uint16_t getModelSize(const char * filename)
+{
+  char path[256];
+  FIL      file;
+  uint16_t size;
+  uint8_t  version;
+
+  memset(path, 0, sizeof(path));
+  getModelPath(path, filename);
+
+  const char * err = openFile(path, &file, &size, &version);
+  if (err)
+    return -1;
+
+  f_close(&file);
+
+  return size;
+}
+#endif
+
 const char * loadModel(const char * filename, bool alarms)
 {
   uint8_t version;
@@ -141,19 +166,48 @@ const char * loadModel(const char * filename, bool alarms)
   if (error) {
     TRACE("loadModel error=%s", error);
   }
-
+#if !defined(PCBTANGO) && !defined(PCBMAMBO)
   if (error) {
     modelDefault(0) ;
     storageCheck(true);
     alarms = false;
   }
-  else if (version < EEPROM_VER) {
+#endif
+
+#if defined(TANGO_CONVERT_VERSION_101)
+  uint32_t model_size;
+
+  model_size = getModelSize(filename);
+  if (model_size == MODEL_DATA_SIZE_101)
+  {
+    convertModelData(version);
+    writeModel();
+    model_size = getModelSize(filename);
+    if (model_size == MODEL_DATA_SIZE_110)
+    {
+      TRACE("convert model data of v1.0.1 success");
+    }
+    else
+    {
+      TRACE("convert model data of v1.0.1 failed");
+    }
+  }
+#endif
+
+#if !defined(PCBMAMBO)
+  if (version < EEPROM_VER) {
     convertModelData(version);
   }
+#endif
 
   postModelLoad(alarms);
 
   return error;
+}
+
+const char * writeGeneralSettings()
+{
+  return writeFile(RADIO_SETTINGS_PATH, (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral));
 }
 
 const char * loadRadioSettings(const char * path)
@@ -165,9 +219,17 @@ const char * loadRadioSettings(const char * path)
     return error;
   }
 
+#if defined(TANGO_CONVERT_VERSION_101)
+  convertRadioData(version);
+  writeGeneralSettings();
+  TRACE("convert radio data of v1.0.1 success");
+#endif
+
+#if !defined(PCBMAMBO)
   if (version < EEPROM_VER) {
     convertRadioData(version);
   }
+#endif
 
   postRadioSettingsLoad();
 
@@ -179,10 +241,6 @@ const char * loadRadioSettings()
   return loadRadioSettings(RADIO_SETTINGS_PATH);
 }
 
-const char * writeGeneralSettings()
-{
-  return writeFile(RADIO_SETTINGS_PATH, (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral));
-}
 
 void storageCheck(bool immediately)
 {
@@ -211,6 +269,9 @@ void storageReadAll()
 
   if (loadRadioSettings() != nullptr) {
     storageEraseAll(true);
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+    bkregSetStatusFlag(STORAGE_ERASE_STATUS);
+#endif
   }
 
   for (uint8_t i = 0; languagePacks[i] != nullptr; i++) {

@@ -31,6 +31,8 @@ env:
     - FLAVOR=XLITE
     - FLAVOR=X9
     - FLAVOR=COLORLCD
+    - FLAVOR=TANGO
+    - FLAVOR=MAMBO
 
 before_install:
   - wget --quiet https://launchpad.net/gcc-arm-embedded/4.7/4.7-2013-q3-update/+download/gcc-arm-none-eabi-${GCC_ARM_VERSION}-20130916-linux.tar.bz2

@@ -24,9 +24,15 @@
 #define SLEEP_BITMAP_WIDTH             60
 #define SLEEP_BITMAP_HEIGHT            60
 
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+const unsigned char bmp_sleep[]  = {
+#include "sleep_tbs.lbm"
+};
+#else
 const unsigned char bmp_sleep[]  = {
 #include "sleep.lbm"
 };
+#endif
 
 void drawStartupAnimation(uint32_t duration, uint32_t totalDuration)
 {

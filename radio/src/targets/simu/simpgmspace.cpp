@@ -404,7 +404,7 @@ void lcdSetRefVolt(uint8_t val)
 }
 #endif
 
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBMAMBO)
 void lcdOff()
 {
 }
@@ -708,7 +708,7 @@ void boardOff()
 {
 }
 
-#if defined(PCBHORUS) || defined(PCBTARANIS)
+#if defined(PCBHORUS) || defined(PCBTARANIS) || defined(PCBTANGO) || defined(PCBMAMBO)
 HardwareOptions hardwareOptions;
 #endif
 

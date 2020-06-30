@@ -31,14 +31,14 @@ void menuStatisticsView(event_t event)
 
   switch (event) {
     case EVT_KEY_FIRST(KEY_UP):
-#if defined(NAVIGATION_X7)
+#if defined(NAVIGATION_X7) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
     case EVT_KEY_BREAK(KEY_PAGE):
 #endif
       chainMenu(menuStatisticsDebug);
       break;
 
     case EVT_KEY_FIRST(KEY_DOWN):
-#if defined(NAVIGATION_X7)
+#if defined(NAVIGATION_X7) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
     case EVT_KEY_LONG(KEY_PAGE):
       killEvents(event);
       chainMenu(menuStatisticsDebug2);
@@ -133,7 +133,7 @@ void menuStatisticsDebug(event_t event)
       break;
 
     case EVT_KEY_FIRST(KEY_UP):
-#if defined(NAVIGATION_X7)
+#if defined(NAVIGATION_X7) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
     case EVT_KEY_BREAK(KEY_PAGE):
       disableVBatBridge();
       chainMenu(menuStatisticsDebug2);
@@ -141,7 +141,7 @@ void menuStatisticsDebug(event_t event)
 #endif
 
     case EVT_KEY_FIRST(KEY_DOWN):
-#if defined(NAVIGATION_X7)
+#if defined(NAVIGATION_X7) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
     case EVT_KEY_LONG(KEY_PAGE):
 #endif
       killEvents(event);
@@ -249,6 +249,13 @@ void menuStatisticsDebug(event_t event)
   y += FH;
 #endif
 
+#if defined(CROSSFIRE_TASK)
+  lcdDrawNumber(MENU_DEBUG_COL1_OFS, y, crossfireStack.available(), LEFT);
+  lcdDrawText(lcdLastRightPos, y, "/");
+  lcdDrawNumber(lcdLastRightPos, y, systemStack.available(), LEFT);
+  y += FH;
+#endif
+
   lcdDrawText(LCD_W/2, 7*FH+1, STR_MENUTORESET, CENTERED);
   lcdInvertLastLine();
 }
@@ -264,14 +271,14 @@ void menuStatisticsDebug2(event_t event)
       break;
 
     case EVT_KEY_FIRST(KEY_UP):
-#if defined(NAVIGATION_X7)
+#if defined(NAVIGATION_X7) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
     case EVT_KEY_BREAK(KEY_PAGE):
 #endif
       chainMenu(menuStatisticsView);
       return;
 
     case EVT_KEY_FIRST(KEY_DOWN):
-#if defined(NAVIGATION_X7)
+#if defined(NAVIGATION_X7) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
     case EVT_KEY_LONG(KEY_PAGE):
 #endif
       killEvents(event);

@@ -108,19 +108,18 @@ void frskyDSetDefault(int index, uint16_t id);
 extern uint8_t telemetryProtocol;
 
 #if defined (MULTIMODULE)
-  #define IS_D16_MULTI(module)           ((g_model.moduleData[module].getMultiProtocol() == MODULE_SUBTYPE_MULTI_FRSKY) && (g_model.moduleData[module].subType == MM_RF_FRSKY_SUBTYPE_D16 || g_model.moduleData[module].subType == MM_RF_FRSKY_SUBTYPE_D16_8CH || g_model.moduleData[module].subType == MM_RF_FRSKY_SUBTYPE_D16_LBT || g_model.moduleData[module].subType == MM_RF_FRSKY_SUBTYPE_D16_LBT_8CH))
-  #define IS_HOTT_MULTI(module)          (g_model.moduleData[module].getMultiProtocol() == MODULE_SUBTYPE_MULTI_HOTT)
-  #if defined(HARDWARE_INTERNAL_MODULE)
-    #define IS_FRSKY_SPORT_PROTOCOL()    (telemetryProtocol == PROTOCOL_TELEMETRY_FRSKY_SPORT || (telemetryProtocol == PROTOCOL_TELEMETRY_MULTIMODULE && (IS_D16_MULTI(INTERNAL_MODULE)||IS_D16_MULTI(EXTERNAL_MODULE))))
-  #else
-    #define IS_FRSKY_SPORT_PROTOCOL()    (telemetryProtocol == PROTOCOL_TELEMETRY_FRSKY_SPORT || (telemetryProtocol == PROTOCOL_TELEMETRY_MULTIMODULE && IS_D16_MULTI(EXTERNAL_MODULE)))
-  #endif
+#define IS_D16_MULTI(module)           ((g_model.moduleData[module].getMultiProtocol() == MODULE_SUBTYPE_MULTI_FRSKY) && (g_model.moduleData[module].subType == MM_RF_FRSKY_SUBTYPE_D16 || g_model.moduleData[module].subType == MM_RF_FRSKY_SUBTYPE_D16_8CH || g_model.moduleData[module].subType == MM_RF_FRSKY_SUBTYPE_D16_LBT || g_model.moduleData[module].subType == MM_RF_FRSKY_SUBTYPE_D16_LBT_8CH))
+#define IS_HOTT_MULTI(module)          (g_model.moduleData[module].getMultiProtocol() == MODULE_SUBTYPE_MULTI_HOTT)
+#if defined(HARDWARE_INTERNAL_MODULE)
+#define IS_FRSKY_SPORT_PROTOCOL()    (telemetryProtocol == PROTOCOL_TELEMETRY_FRSKY_SPORT || (telemetryProtocol == PROTOCOL_TELEMETRY_MULTIMODULE && (IS_D16_MULTI(INTERNAL_MODULE)||IS_D16_MULTI(EXTERNAL_MODULE))))
 #else
-  #define IS_D16_MULTI(module)           false
-  #define IS_HOTT_MULTI(module)          false
-  #define IS_FRSKY_SPORT_PROTOCOL()      (telemetryProtocol == PROTOCOL_TELEMETRY_FRSKY_SPORT)
+#define IS_FRSKY_SPORT_PROTOCOL()    (telemetryProtocol == PROTOCOL_TELEMETRY_FRSKY_SPORT || (telemetryProtocol == PROTOCOL_TELEMETRY_MULTIMODULE && IS_D16_MULTI(EXTERNAL_MODULE)))
 #endif
-
+#else
+#define IS_D16_MULTI(module)           false
+#define IS_HOTT_MULTI(module)          false
+#define IS_FRSKY_SPORT_PROTOCOL()      (telemetryProtocol == PROTOCOL_TELEMETRY_FRSKY_SPORT)
+#endif
 #define IS_SPEKTRUM_PROTOCOL()           (telemetryProtocol == PROTOCOL_TELEMETRY_SPEKTRUM)
 
 #if defined(PCBTARANIS) || defined(PCBHORUS)
@@ -257,6 +256,15 @@ class OutputTelemetryBuffer {
 };
 
 extern OutputTelemetryBuffer outputTelemetryBuffer __DMA;
+
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+extern uint8_t outputTelemetryBufferTrigger;
+inline void telemetryOutputSetTrigger(uint8_t byte)
+{
+  outputTelemetryBufferTrigger = byte;
+}
+#endif
+
 
 #if defined(LUA)
 #define LUA_TELEMETRY_INPUT_FIFO_SIZE  256

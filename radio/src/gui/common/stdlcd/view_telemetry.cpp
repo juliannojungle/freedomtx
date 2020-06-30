@@ -34,7 +34,7 @@ enum NavigationDirection {
 #if defined(NAVIGATION_XLITE)
   #define EVT_KEY_PREVIOUS_VIEW(evt)         (evt == EVT_KEY_LONG(KEY_LEFT) && IS_SHIFT_PRESSED())
   #define EVT_KEY_NEXT_VIEW(evt)             (evt == EVT_KEY_LONG(KEY_RIGHT) && IS_SHIFT_PRESSED())
-#elif defined(NAVIGATION_X7) || defined(NAVIGATION_X9D)
+#elif defined(NAVIGATION_X7) || defined(NAVIGATION_X9D) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
   #define EVT_KEY_PREVIOUS_VIEW(evt)         (evt == EVT_KEY_LONG(KEY_PAGE))
   #define EVT_KEY_NEXT_VIEW(evt)             (evt == EVT_KEY_BREAK(KEY_PAGE))
 #elif defined(NAVIGATION_9X)

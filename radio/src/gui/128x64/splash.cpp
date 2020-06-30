@@ -23,7 +23,13 @@
 #if defined(SPLASH)
 const unsigned char splashdata[]  = {
   'S','P','S',0,
+#if defined(PCBTANGO)
+  #include "bitmaps/128x64/splash_freedomtx_96.lbm"
+#elif defined(PCBMAMBO)
+  #include "bitmaps/128x64/splash_freedomtx.lbm"
+#else
   #include "bitmaps/128x64/splash.lbm"
+#endif
   'S','P','E',0 };
 
 const unsigned char * const splash_lbm = splashdata+4;
@@ -44,10 +50,16 @@ void drawSplash()
 }
 #endif
 
-#if defined(FRSKY_RELEASE)
+#if defined(FRSKY_RELEASE) || defined(TBS_RELEASE)
 const unsigned char splashdata2[]  = {
   'S','F','S',0,
+#if defined(FRSKY_RELEASE)
   #include "bitmaps/128x64/splash_frsky.lbm"
+#elif defined(PCBTANGO)
+  #include "bitmaps/128x64/splash_tbs_96.lbm"
+#elif defined(PCBMAMBO)
+  #include "bitmaps/128x64/splash_tbs.lbm"
+#endif
   'S','F','E',0 };
 
 const unsigned char * const splash2_lbm = splashdata2+4;
@@ -59,3 +71,24 @@ void drawSecondSplash()
   lcdRefresh();
 }
 #endif
+
+#if defined(TBS_RELEASE)
+const unsigned char downloaddata[]  = {
+  'S','F','S',0,
+#if defined(PCBTANGO)
+#include "bitmaps/128x64/download_96.lbm"
+#elif defined(PCBMAMBO)
+#include "bitmaps/128x64/download.lbm"
+#endif
+  'S','F','E',0 };
+
+const unsigned char * const download_lbm = downloaddata+4;
+void drawDownload()
+{
+  lcdClear();
+  lcdDraw1bitBitmap(0, 0, download_lbm, 0, 0);
+  lcdRefresh();
+  lcdRefreshWait();
+}
+#endif
+

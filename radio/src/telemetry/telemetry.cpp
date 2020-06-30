@@ -59,7 +59,16 @@ void processTelemetryData(uint8_t data)
   }
 #endif
 
+#if defined(PCBTANGO)
+  if (IS_PCBREV_02() && IS_EXTERNAL_MODULE_ENABLED()) {
+      processFrskyTelemetryData(data);
+  }
+#elif defined(PCBMAMBO)
+  if (IS_EXTERNAL_MODULE_ENABLED())
+    processFrskyTelemetryData(data);
+#else
   processFrskyTelemetryData(data);
+#endif
 }
 
 inline bool isBadAntennaDetected()
@@ -78,9 +87,22 @@ inline bool isBadAntennaDetected()
 
 void telemetryWakeup()
 {
-  uint8_t requiredTelemetryProtocol = modelTelemetryProtocol();
+  uint8_t requiredTelemetryProtocol;
+#if defined(PCBTANGO)
+  if (IS_PCBREV_01() || !IS_EXTERNAL_MODULE_ENABLED())
+    requiredTelemetryProtocol = PROTOCOL_TELEMETRY_CROSSFIRE;
+  else {
+      requiredTelemetryProtocol = modelTelemetryProtocol();
+  }
+#elif defined(PCBMAMBO)
+  if (IS_EXTERNAL_MODULE_ENABLED())
+    requiredTelemetryProtocol = modelTelemetryProtocol();
+  else
+    requiredTelemetryProtocol = PROTOCOL_TELEMETRY_CROSSFIRE;
+#else
+  requiredTelemetryProtocol = modelTelemetryProtocol();
+#endif
   uint8_t data;
-
 #if defined(REVX)
   uint8_t requiredSerialInversion = g_model.moduleData[EXTERNAL_MODULE].invertedSerial;
   if (telemetryProtocol != requiredTelemetryProtocol || serialInversion != requiredSerialInversion) {
@@ -268,6 +290,10 @@ void telemetryInit(uint8_t protocol)
     // The DIY Multi module always speaks 100000 baud regardless of the telemetry protocol in use
     telemetryPortInit(MULTIMODULE_BAUDRATE, TELEMETRY_SERIAL_8E2);
 #if defined(LUA)
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+    if (!IS_EXTERNAL_MODULE_ENABLED())
+      outputTelemetryBufferTrigger = 0;
+#endif
     outputTelemetryBuffer.reset();
 #endif
   }
@@ -281,6 +307,10 @@ void telemetryInit(uint8_t protocol)
   else if (protocol == PROTOCOL_TELEMETRY_CROSSFIRE) {
     telemetryPortInit(CROSSFIRE_BAUDRATE, TELEMETRY_SERIAL_DEFAULT);
 #if defined(LUA)
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+    if (!IS_EXTERNAL_MODULE_ENABLED())
+      outputTelemetryBufferTrigger = 0;
+#endif
     outputTelemetryBuffer.reset();
 #endif
     telemetryPortSetDirectionOutput();
@@ -297,6 +327,10 @@ void telemetryInit(uint8_t protocol)
   else {
     telemetryPortInit(FRSKY_SPORT_BAUDRATE, TELEMETRY_SERIAL_WITHOUT_DMA);
 #if defined(LUA)
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+    if (!IS_EXTERNAL_MODULE_ENABLED())
+      outputTelemetryBufferTrigger = 0;
+#endif
     outputTelemetryBuffer.reset();
 #endif
   }
@@ -332,8 +366,11 @@ void logTelemetryWriteByte(uint8_t data)
 }
 #endif
 
-OutputTelemetryBuffer outputTelemetryBuffer __DMA;
+#if defined(PCBTANGO) || defined(PCBMAMBO) 
+uint8_t outputTelemetryBufferTrigger = 0;
+#endif
 
+OutputTelemetryBuffer outputTelemetryBuffer __DMA;
 #if defined(LUA)
 Fifo<uint8_t, LUA_TELEMETRY_INPUT_FIFO_SIZE> * luaInputTelemetryFifo = NULL;
 #endif

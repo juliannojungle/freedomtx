@@ -35,3 +35,8 @@ void convertRadioData_217_to_218(RadioData &settings);
 // Conversions 218 to 219
 void convertModelData_218_to_219(ModelData &model);
 void convertRadioData_218_to_219(RadioData &settings);
+
+#if defined(TANGO_CONVERT_VERSION_101)
+void convertModelData_101_to_110(ModelData &model);
+void convertRadioData_101_to_110(RadioData &radio);
+#endif

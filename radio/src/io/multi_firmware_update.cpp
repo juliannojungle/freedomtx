@@ -527,10 +527,10 @@ bool multiFlashFirmware(uint8_t moduleIdx, const char * filename)
 
   uint8_t extPwr = IS_EXTERNAL_MODULE_ON();
   EXTERNAL_MODULE_OFF();
-
+#if !defined(PCBTANGO) && !defined (PCBMAMBO)
   uint8_t spuPwr = IS_SPORT_UPDATE_POWER_ON();
   SPORT_UPDATE_POWER_OFF();
-
+#endif
   drawProgressScreen(getBasename(filename), STR_DEVICE_RESET, 0, 0);
 
   /* wait 2s off */
@@ -555,8 +555,9 @@ bool multiFlashFirmware(uint8_t moduleIdx, const char * filename)
   INTERNAL_MODULE_OFF();
 #endif
   EXTERNAL_MODULE_OFF();
+#if !defined (PCBMAMBO)
   SPORT_UPDATE_POWER_OFF();
-
+#endif
   /* wait 2s off */
   watchdogSuspend(500 /*5s*/);
   RTOS_WAIT_MS(2000);
@@ -575,10 +576,11 @@ bool multiFlashFirmware(uint8_t moduleIdx, const char * filename)
     EXTERNAL_MODULE_ON();
     setupPulsesExternalModule();
   }
-
+#if !defined(PCBTANGO) && !defined (PCBMAMBO)
   if (spuPwr) {
     SPORT_UPDATE_POWER_ON();
   }
+#endif
 
   resumePulses();
 

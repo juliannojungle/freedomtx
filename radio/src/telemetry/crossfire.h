@@ -25,9 +25,10 @@
 #include "dataconstants.h"
 
 // Device address
-#define BROADCAST_ADDRESS              0x00
-#define RADIO_ADDRESS                  0xEA
-#define MODULE_ADDRESS                 0xEE
+#define BROADCAST_ADDRESS               0x00
+#define CRSF_SYNC_BYTE                  0xC8
+#define RADIO_ADDRESS                   0xEA
+#define MODULE_ADDRESS                  0xEE
 
 // Frame id
 #define GPS_ID                         0x02
@@ -81,6 +82,7 @@ enum CrossfireSensorIndexes {
 
 void processCrossfireTelemetryData(uint8_t data);
 void crossfireSetDefault(int index, uint8_t id, uint8_t subId);
+bool isCrossfireOutputBufferAvailable();
 
 const uint32_t CROSSFIRE_BAUDRATES[] = {
   400000,

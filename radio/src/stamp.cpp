@@ -39,7 +39,7 @@
 #elif defined(RADIOMASTER_RELEASE)
 #define DISPLAY_VERSION "Radiomaster"
 #elif defined(TBS_RELEASE)
-#define DISPLAY_VERSION "TBS"
+#define DISPLAY_VERSION "TBS-" VERSION
 #else
 #define DISPLAY_VERSION VERSION
 #endif
@@ -51,6 +51,8 @@
   const char eeprom_stamp[]  = "EEPR" TAB ": " EEPROM_STR;
 #elif defined(BOARD_NAME)
   const char vers_stamp[]  = "FW" TAB ": opentx-" BOARD_NAME "\036VERS" TAB ": " DISPLAY_VERSION " (" GIT_STR ")" "\036DATE" TAB ": " DATE " " TIME "\036EEPR" TAB ": " EEPROM_STR;
+#elif defined(PCBTANGO) || defined (PCBMAMBO)
+  const char vers_stamp[]  = "FW" TAB ": fdtx-"   FLAVOUR    "\036VERS" TAB ": " DISPLAY_VERSION " (" GIT_STR ")" "\036DATE" TAB ": " DATE " " TIME "\036EEPR" TAB ": " EEPROM_STR;
 #else
   const char vers_stamp[]  = "FW" TAB ": opentx-" FLAVOUR    "\036VERS" TAB ": " DISPLAY_VERSION " (" GIT_STR ")" "\036DATE" TAB ": " DATE " " TIME "\036EEPR" TAB ": " EEPROM_STR;
 #endif

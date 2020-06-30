@@ -20,7 +20,7 @@
 
 #include "opentx.h"
 
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBTANGO) || defined (PCBMAMBO)
 uint8_t switchToMix(uint8_t source)
 {
   div_t qr = div(source-1, 3);
@@ -473,6 +473,11 @@ bool isAssignableFunctionAvailable(int function)
 #endif
     case FUNC_RESERVE5:
       return false;
+#if defined(PCBTANGO)
+    case FUNC_TRAINER:
+    case FUNC_SET_FAILSAFE:
+      return false;
+#endif
 
     default:
       return true;

@@ -182,7 +182,12 @@ void enablePulsesExternalModule(uint8_t protocol)
 
 #if defined(CROSSFIRE)
     case PROTOCOL_CHANNELS_CROSSFIRE:
+#if defined(PCBTANGO)
+    if (IS_EXTERNAL_MODULE_ENABLED())
       EXTERNAL_MODULE_ON();
+#else
+      EXTERNAL_MODULE_ON();
+#endif
       break;
 #endif
 
@@ -198,7 +203,11 @@ void enablePulsesExternalModule(uint8_t protocol)
 
 #if defined(MULTIMODULE)
     case PROTOCOL_CHANNELS_MULTIMODULE:
+#if defined(PCBTANGO)
+      extmoduleSerialStart(MULTIMODULE_BAUDRATE, MULTIMODULE_PERIOD * 2000, false);
+#else
       extmoduleSerialStart(MULTIMODULE_BAUDRATE, MULTIMODULE_PERIOD * 2000, true);
+#endif
       break;
 #endif
 
@@ -262,7 +271,13 @@ bool setupPulsesExternalModule(uint8_t protocol)
 
 #if defined(CROSSFIRE)
     case PROTOCOL_CHANNELS_CROSSFIRE:
+#if defined(PCBTANGO)
+      if (IS_PCBREV_02() && IS_EXTERNAL_MODULE_ENABLED())
+        setupPulsesCrossfire();
+#endif
+#if !defined(PCBTANGO)
       setupPulsesCrossfire();
+#endif
       scheduleNextMixerCalculation(EXTERNAL_MODULE, CROSSFIRE_PERIOD);
       return true;
 #endif

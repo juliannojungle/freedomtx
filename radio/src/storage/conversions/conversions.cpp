@@ -23,6 +23,12 @@
 
 void convertRadioData(int version)
 {
+#if defined(PCBTANGO)
+  #if defined(TANGO_CONVERT_VERSION_101)
+    convertRadioData_101_to_110(g_eeGeneral);
+  #endif
+#endif
+
   TRACE("convertRadioData(%d)", version);
 
 #if EEPROM_CONVERSIONS < 217
@@ -49,6 +55,12 @@ void convertRadioData(int version)
 
 void convertModelData(int version)
 {
+#if defined(PCBTANGO)
+  #if defined(TANGO_CONVERT_VERSION_101)
+      convertModelData_101_to_110(g_model);
+  #endif
+#endif
+
   TRACE("convertModelData(%d)", version);
 
 #if EEPROM_CONVERSIONS < 217

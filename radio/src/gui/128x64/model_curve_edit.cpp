@@ -162,7 +162,7 @@ void menuModelCurveOne(event_t event)
       }
       break;
 
-#if defined(NAVIGATION_X7)
+#if defined(NAVIGATION_X7) || defined(NAVIGATION_TANGO) || defined(NAVIGATION_MAMBO)
     case EVT_KEY_LONG(KEY_MENU):
       pushMenu(menuChannelsView);
       killEvents(event);
