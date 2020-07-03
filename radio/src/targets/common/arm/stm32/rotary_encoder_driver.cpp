@@ -145,7 +145,9 @@ extern "C" void ROTARY_ENCODER_EXTI_IRQHandler1(void)
 #endif
 
 #if !defined(BOOT) && defined(TELEMETRY_EXTI_REUSE_INTERRUPT_ROTARY_ENCODER)
+#if defined(PCBTANGO) && !defined(DEBUG)
   check_telemetry_exti();
+#endif
 #endif
 }
 

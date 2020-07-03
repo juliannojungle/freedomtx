@@ -520,6 +520,11 @@ bool multiFlashFirmware(uint8_t moduleIdx, const char * filename)
 
   pausePulses();
 
+#if (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
+  uint8_t intPwr = isCrossfirePowerOn();
+  if (intPwr)
+    crossfireTurnOffRf(false);
+#endif
 #if defined(HARDWARE_INTERNAL_MODULE)
   uint8_t intPwr = IS_INTERNAL_MODULE_ON();
   INTERNAL_MODULE_OFF();
@@ -555,7 +560,7 @@ bool multiFlashFirmware(uint8_t moduleIdx, const char * filename)
   INTERNAL_MODULE_OFF();
 #endif
   EXTERNAL_MODULE_OFF();
-#if !defined (PCBMAMBO)
+#if !defined(PCBTANGO) && !defined (PCBMAMBO)
   SPORT_UPDATE_POWER_OFF();
 #endif
   /* wait 2s off */
@@ -582,6 +587,10 @@ bool multiFlashFirmware(uint8_t moduleIdx, const char * filename)
   }
 #endif
 
+#if (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
+  if (intPwr)
+    crossfireTurnOnRf();
+#endif
   resumePulses();
 
   return result == nullptr;

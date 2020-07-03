@@ -87,6 +87,7 @@ void drawDownload()
 {
   lcdClear();
   lcdDraw1bitBitmap(0, 0, download_lbm, 0, 0);
+  lcdDrawText(LCD_W>>1, LCD_H-FH, STR_UPDATE_CROSSFIRE, CENTERED);
   lcdRefresh();
   lcdRefreshWait();
 }

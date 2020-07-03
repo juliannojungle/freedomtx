@@ -24,8 +24,17 @@
 uint32_t rotencPositionValue;
 #endif
 
+#if defined(PCBTANGO)
 uint8_t  g_trimState = 0;
+#elif defined(PCBMAMBO)
+#define POT_MULTIPOS_SWITCH_ADC_TOLERANCE   128
+#define POT_3POS_SWITCH_POS1_ADC  0
+#define POT_3POS_SWITCH_POS2_ADC  1024
+#define POT_3POS_SWITCH_POS3_ADC  2048
 
+#define TRIM_ADC_OFFSET             20
+#define IS_TRIM_PRESSED_STATE(x)    ((x - TRIM_ADC_OFFSET) < trimValue && trimValue < (x + TRIM_ADC_OFFSET))
+#endif
 uint32_t readKeys()
 {
   uint32_t result = 0;
@@ -71,9 +80,34 @@ uint32_t readTrims()
 {
   uint32_t result = 0;
 
+#if defined(PCBTANGO)  
   // the trim state from the events of per10ms()
   result = g_trimState;
   g_trimState = 0;
+#elif defined(PCBMAMBO)
+  #if !defined(SIMU) && !defined (BOOT)
+  uint16_t trimValue = anaIn(TX_TRIM);
+  if (trimValue > 800) {
+    if (IS_TRIM_PRESSED_STATE(995))
+      result |= 0x01;
+    if (IS_TRIM_PRESSED_STATE(1271))
+      result |= 0x02;
+    if (IS_TRIM_PRESSED_STATE(1414))
+      result |= 0x04;
+    if (IS_TRIM_PRESSED_STATE(1505))
+      result |= 0x08;
+
+    if (IS_TRIM_PRESSED_STATE(1637))
+      result |= 0x10;
+    if (IS_TRIM_PRESSED_STATE(1570))
+      result |= 0x20;
+    if (IS_TRIM_PRESSED_STATE(1720))
+      result |= 0x40;
+    if (IS_TRIM_PRESSED_STATE(1807))
+      result |= 0x80;
+  }
+  #endif
+#endif
 
   return result;
 }
@@ -120,6 +154,7 @@ void readKeysAndTrims()
     xxx = ~SWITCHES_GPIO_REG_ ## x  & SWITCHES_GPIO_PIN_ ## x ; \
     break;
 
+#if defined(PCBTANGO)  
 #define ADD_3POS_CASE(x, i) \
   case SW_S ## x ## 0: \
     xxx = (SWITCHES_GPIO_REG_ ## x ## _H & SWITCHES_GPIO_PIN_ ## x ## _H); \
@@ -136,6 +171,19 @@ void readKeysAndTrims()
       xxx = xxx && (SWITCHES_GPIO_REG_ ## x ## _L & SWITCHES_GPIO_PIN_ ## x ## _L); \
     } \
     break
+#elif defined(PCBMAMBO)
+#define ADD_3POS_CASE(x) \
+  case SW_S ## x ## 0: \
+    xxx = (anaIn(SWITCH_ ## x) < POT_3POS_SWITCH_POS1_ADC + POT_MULTIPOS_SWITCH_ADC_TOLERANCE) ? 1 : 0; \
+    break; \
+  case SW_S ## x ## 1: \
+    xxx = (anaIn(SWITCH_ ## x) < POT_3POS_SWITCH_POS2_ADC + POT_MULTIPOS_SWITCH_ADC_TOLERANCE && \
+           anaIn(SWITCH_ ## x) > POT_3POS_SWITCH_POS2_ADC - POT_MULTIPOS_SWITCH_ADC_TOLERANCE) ? 1 : 0; \
+    break; \
+  case SW_S ## x ## 2: \
+    xxx = (anaIn(SWITCH_ ## x) > POT_3POS_SWITCH_POS3_ADC - POT_MULTIPOS_SWITCH_ADC_TOLERANCE) ? 1 : 0; \
+    break
+#endif
 
 uint8_t keyState(uint8_t index)
 {
@@ -149,11 +197,20 @@ uint32_t switchState(uint8_t index)
 
   switch (index) {
     ADD_2POS_CASE(A);
+#if defined(PCBTANGO)
     ADD_3POS_CASE(B, 1);
     ADD_3POS_CASE(C, 2);
     ADD_2POS_CASE(D);
     ADD_2POS_CASE(E);
     ADD_2POS_CASE(F);
+#elif defined(PCBMAMBO)
+    ADD_3POS_CASE(B);
+    ADD_3POS_CASE(C);
+    ADD_3POS_CASE(D);
+    ADD_3POS_CASE(E);
+    ADD_2POS_CASE(F);
+#endif
+
     default:
       break;
   }

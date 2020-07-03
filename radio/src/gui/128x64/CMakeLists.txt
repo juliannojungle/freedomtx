@@ -41,7 +41,7 @@ elseif(PCB STREQUAL MAMBO)
   set(GUI_SRC
     ${GUI_SRC}
     radio_calibration_hall.cpp
-    model_select_mambo.cpp
+    model_select_tango.cpp
     model_crossfire_setup.cpp
     )
 endif()

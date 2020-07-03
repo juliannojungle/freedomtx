@@ -2011,7 +2011,7 @@ void opentxInit()
 #endif
 #endif  // #if !defined(EEPROM)
 
-#if defined(PCBTANGO) || defined(PCBMAMBO)
+#if (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
   // read the settings (especailly power on delay) from sdcard first then run the startup animation
   if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE() || bkregGetStatusFlag(STORAGE_ERASE_STATUS)) {
     if(bkregGetStatusFlag(STORAGE_ERASE_STATUS))
@@ -2021,6 +2021,9 @@ void opentxInit()
   }
   else {
     runStartupAnimation();
+  }
+  if (g_model.moduleData[EXTERNAL_MODULE].type != MODULE_TYPE_NONE) {
+    crossfireTurnOffRf(false);
   }
 #endif
 
@@ -2068,7 +2071,7 @@ void opentxInit()
   }
 
   if (!globalData.unexpectedShutdown) {
-#if defined(PCBTANGO) || defined(PCBMAMBO)
+#if (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
     if(getBoardOffState()) opentxStart(OPENTX_START_NO_SPLASH | OPENTX_START_NO_CHECKS); else    
 #endif
     opentxStart();

@@ -48,6 +48,29 @@ void watchdogInit(unsigned int duration)
   IWDG->KR = 0xCCCC;      // start
 }
 
+#if defined(SPORT_UPDATE_PWR_GPIO)
+void sportUpdateInit()
+{
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Pin = SPORT_UPDATE_PWR_GPIO_PIN;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+  GPIO_Init(SPORT_UPDATE_PWR_GPIO, &GPIO_InitStructure);
+}
+
+void sportUpdatePowerOn()
+{
+  GPIO_SPORT_UPDATE_PWR_GPIO_ON(SPORT_UPDATE_PWR_GPIO, SPORT_UPDATE_PWR_GPIO_PIN);
+}
+
+void sportUpdatePowerOff()
+{
+  GPIO_SPORT_UPDATE_PWR_GPIO_OFF(SPORT_UPDATE_PWR_GPIO, SPORT_UPDATE_PWR_GPIO_PIN);
+}
+#endif
+
 static void chargerInit(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
@@ -95,11 +118,15 @@ static void detectChargingMode(void)
       tm10ms = g_tmr10ms;
     }
     if ((g_tmr10ms- tm100ms) > 49) {
-      // lcdClear();
+#if defined(PCBMAMBO)
+      lcdClear();
+      drawChargingState();
+      lcdRefresh();
+#endif
       checkBattery();
-      // drawChargingState();
-      // lcdRefresh();
+#if defined(CHARGING_LEDS)
       LED_CHARGING_IN_PROGRESS();
+#endif
       tm100ms = g_tmr10ms;
     }
   }
@@ -122,11 +149,15 @@ static void detectChargingMode(void)
       tm10ms = g_tmr10ms;
     }
     if ((g_tmr10ms- tm100ms) > 49) {
-      // lcdClear();
+#if defined(PCBMAMBO)
+      lcdClear();
+      drawFullyCharged();
+      lcdRefresh();
+#endif
       checkBattery();
-      // drawFullyCharged();
-      // lcdRefresh();
+#if defined(CHARGING_LEDS)
       LED_CHARGING_DONE();
+#endif
       tm100ms = g_tmr10ms;
     }
   }
@@ -134,40 +165,48 @@ static void detectChargingMode(void)
 
 void boardInit()
 {
+#if defined(PCBTANGO)
   if (IS_PCBREV_01()) {
-    RCC_AHB1PeriphClockCmd(PWR_RCC_AHB1Periph |
-                           KEYS_RCC_AHB1Periph | LCD_RCC_AHB1Periph |
-                           AUDIO_RCC_AHB1Periph |
-                           ADC_RCC_AHB1Periph | I2C_RCC_AHB1Periph |
-                           SD_RCC_AHB1Periph | HAPTIC_RCC_AHB1Periph |
-                           TELEMETRY_RCC_AHB1Periph | LED_RCC_AHB1Periph,
+    RCC_AHB1PeriphClockCmd(PWR_RCC_AHB1Periph | KEYS_RCC_AHB1Periph | LCD_RCC_AHB1Periph |
+                           AUDIO_RCC_AHB1Periph | ADC_RCC_AHB1Periph | SD_RCC_AHB1Periph | 
+                           HAPTIC_RCC_AHB1Periph | TELEMETRY_RCC_AHB1Periph | LED_RCC_AHB1Periph,
                            ENABLE);
 
-    RCC_APB1PeriphClockCmd(LCD_RCC_APB1Periph | AUDIO_RCC_APB1Periph | ADC_RCC_APB1Periph |
-                           HAPTIC_RCC_APB1Periph | INTERRUPT_xMS_RCC_APB1Periph |
-                           TIMER_2MHz_RCC_APB1Periph | LED_RCC_APB1Periph |
-                           SD_RCC_APB1Periph | TELEMETRY_RCC_APB1Periph, ENABLE);
+    RCC_APB1PeriphClockCmd(LCD_RCC_APB1Periph | AUDIO_RCC_APB1Periph | INTERRUPT_xMS_RCC_APB1Periph | 
+                           TIMER_2MHz_RCC_APB1Periph | LED_RCC_APB1Periph | TELEMETRY_RCC_APB1Periph, 
+                           ENABLE);
 
-    RCC_APB2PeriphClockCmd( ADC_RCC_APB2Periph | ROTARY_ENCODER_RCC_APB2Periph |
-                            HAPTIC_RCC_APB2Periph, ENABLE);
+    RCC_APB2PeriphClockCmd(ADC_RCC_APB2Periph | ROTARY_ENCODER_RCC_APB2Periph, ENABLE);
   }
   else {
-    RCC_AHB1PeriphClockCmd(PWR_RCC_AHB1Periph |
-                           KEYS_RCC_AHB1Periph | LCD_RCC_AHB1Periph |
-                           AUDIO_RCC_AHB1Periph |
-                           ADC_RCC_AHB1Periph | I2C_RCC_AHB1Periph |
-                           SD_RCC_AHB1Periph | HAPTIC_RCC_AHB1Periph |
-                           TELEMETRY_RCC_AHB1Periph | LED_RCC_AHB1Periph |
+    RCC_AHB1PeriphClockCmd(PWR_RCC_AHB1Periph | KEYS_RCC_AHB1Periph | LCD_RCC_AHB1Periph |
+                           AUDIO_RCC_AHB1Periph | ADC_RCC_AHB1Periph | SD_RCC_AHB1Periph | 
+                           HAPTIC_RCC_AHB1Periph | TELEMETRY_RCC_AHB1Periph | LED_RCC_AHB1Periph |
                            EXTMODULE_RCC_AHB1Periph, ENABLE);
 
-    RCC_APB1PeriphClockCmd(LCD_RCC_APB1Periph | AUDIO_RCC_APB1Periph | ADC_RCC_APB1Periph |
-                           HAPTIC_RCC_APB1Periph | INTERRUPT_xMS_RCC_APB1Periph |
-                           TIMER_2MHz_RCC_APB1Periph | LED_RCC_APB1Periph |
-                           SD_RCC_APB1Periph | TELEMETRY_RCC_APB1Periph, ENABLE);
+    RCC_APB1PeriphClockCmd(LCD_RCC_APB1Periph | AUDIO_RCC_APB1Periph | INTERRUPT_xMS_RCC_APB1Periph | 
+                           TIMER_2MHz_RCC_APB1Periph | LED_RCC_APB1Periph | TELEMETRY_RCC_APB1Periph, 
+                           ENABLE);
 
-    RCC_APB2PeriphClockCmd( ADC_RCC_APB2Periph | ROTARY_ENCODER_RCC_APB2Periph |
-                            HAPTIC_RCC_APB2Periph | EXTMODULE_RCC_APB2Periph, ENABLE);
+    RCC_APB2PeriphClockCmd(ADC_RCC_APB2Periph | ROTARY_ENCODER_RCC_APB2Periph | EXTMODULE_RCC_APB2Periph, 
+                           ENABLE);
   }
+#elif defined(PCBMAMBO)
+  RCC_AHB1PeriphClockCmd(PWR_RCC_AHB1Periph | KEYS_RCC_AHB1Periph | LCD_RCC_AHB1Periph |
+                         AUDIO_RCC_AHB1Periph | BACKLIGHT_RCC_AHB1Periph | ADC_RCC_AHB1Periph | 
+                         SD_RCC_AHB1Periph | HAPTIC_RCC_AHB1Periph | EXTMODULE_RCC_AHB1Periph | 
+                         TELEMETRY_RCC_AHB1Periph | AUX_SERIAL_RCC_AHB1Periph, 
+                         ENABLE);
+
+  RCC_APB1PeriphClockCmd(LCD_RCC_APB1Periph | AUDIO_RCC_APB1Periph | BACKLIGHT_RCC_APB1Periph | 
+                         INTERRUPT_xMS_RCC_APB1Periph |TIMER_2MHz_RCC_APB1Periph | TELEMETRY_RCC_APB1Periph |
+                         AUX_SERIAL_RCC_APB1Periph, 
+                         ENABLE);
+
+  RCC_APB2PeriphClockCmd(ADC_RCC_APB2Periph | EXTMODULE_RCC_APB2Periph | ROTARY_ENCODER_RCC_APB2Periph |
+                         HEARTBEAT_RCC_APB2Periph, 
+                         ENABLE);
+#endif
 
   pwrInit();
   keysInit();
@@ -186,6 +225,9 @@ void boardInit()
 #endif
   delaysInit();
   adcInit();
+#if defined(PCBMAMBO)
+  backlightInit();
+#endif
   lcdInit(); // delaysInit() must be called before
   audioInit();
   init2MhzTimer();
@@ -198,7 +240,11 @@ void boardInit()
   chargerInit();
   __enable_irq();
 
+#if defined(PCBTANGO)
   hardwareOptions.pcbrev = (crsfGetHWID() & ~HW_ID_MASK) == 0x02 ? PCBREV_Tango2_V2 : PCBREV_Tango2_V1;
+#elif defined(PCBMAMBO)
+  hardwareOptions.pcbrev = (crsfGetHWID() & ~HW_ID_MASK) == 0x02 ? PCBREV_Mambo_V2 : PCBREV_Mambo_V1;
+#endif
 
 #if defined(RTCLOCK) && !defined(COPROCESSOR)
   rtcInit(); // RTC must be initialized before rambackupRestore() is called
@@ -206,7 +252,7 @@ void boardInit()
 
 #if defined(DEBUG) && defined(AUX_SERIAL_GPIO)
   auxSerialInit(0, 0); // default serial mode (None if DEBUG not defined)
-  TRACE("\nTango board started :)");
+  TRACE("\n%s board started :)", MY_DEVICE_NAME);
   TRACE("RCC->CSR = %08x\n", RCC->CSR);
 #endif
 
@@ -295,10 +341,15 @@ uint16_t getBatteryVoltage()
 {
   int32_t instant_vbat = anaIn(TX_VOLTAGE); // using filtered ADC value on purpose
   float batt_scale;
+#if defined(PCBTANGO)
   if (IS_PCBREV_02())
     batt_scale = BATT_SCALE2;
   else 
     batt_scale = BATT_SCALE;
+#elif defined(PCBMAMBO)
+  batt_scale = BATT_SCALE;
+#endif
+
   instant_vbat = instant_vbat / batt_scale + g_eeGeneral.txVoltageCalibration;
   instant_vbat = instant_vbat > BATTERY_MAX * 10 ? BATTERY_MAX * 10 : instant_vbat;
   return (uint16_t)instant_vbat;
@@ -359,8 +410,10 @@ void trampolineInit( void )
 void loadDefaultRadioSettings(void)
 {
   // this is to reset incorrect radio settings. should be removed later.
-  g_eeGeneral.lightAutoOff = g_eeGeneral.lightAutoOff < BACKLIGHT_TIMEOUT_MIN ? 6 : g_eeGeneral.lightAutoOff;
+#if defined(PCBTANGO)
   g_eeGeneral.backlightMode = g_eeGeneral.backlightMode < e_backlight_mode_keys ? e_backlight_mode_keys : g_eeGeneral.backlightMode;
+#endif
+  g_eeGeneral.lightAutoOff = g_eeGeneral.lightAutoOff < BACKLIGHT_TIMEOUT_MIN ? 6 : g_eeGeneral.lightAutoOff;
   g_eeGeneral.switchConfig = DEFAULT_SWITCH_CONFIG;
   g_eeGeneral.jitterFilter = 0;
 }

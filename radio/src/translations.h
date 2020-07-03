@@ -346,6 +346,7 @@ extern const char STR_MOVE_PLUS[];
 extern const char STR_JOYSTICK_RF[];
 extern const char STR_TURN_OFF_RF[];
 extern const char STR_ROTARY_REVERSE[];
+extern const char STR_UPDATE_CROSSFIRE[];
 #endif
 extern const char STR_RXBATT[];
 extern const char STR_TX[];

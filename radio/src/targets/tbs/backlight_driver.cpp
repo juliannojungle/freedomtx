@@ -19,7 +19,7 @@
  */
 
 #include "opentx.h"
-
+#if defined(PCBTANGO)
 void backlightEnable(uint8_t level)
 {
   // the scale is divided into two groups since the affect of contrast configuration is not so linear
@@ -35,3 +35,38 @@ void backlightEnable(uint8_t level)
   lcdAdjustContrast(value);
   lcdOn();
 }
+#elif defined(PCBMAMBO)
+void backlightInit()
+{
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Pin = BACKLIGHT_GPIO_PIN;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+  GPIO_Init(BACKLIGHT_GPIO, &GPIO_InitStructure);
+  GPIO_PinAFConfig(BACKLIGHT_GPIO, BACKLIGHT_GPIO_PinSource, BACKLIGHT_GPIO_AF);
+  BACKLIGHT_TIMER->ARR = 100;
+  BACKLIGHT_TIMER->PSC = BACKLIGHT_TIMER_FREQ / 50000 - 1; // 20us * 100 = 2ms => 500Hz
+  BACKLIGHT_TIMER->CCMR2 = TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2; // PWM
+  BACKLIGHT_TIMER->CCER = TIM_CCER_CC4E | TIM_CCER_CC2E;
+  BACKLIGHT_COUNTER_REGISTER = 0;
+  BACKLIGHT_TIMER->EGR = 0;
+  BACKLIGHT_TIMER->CR1 = TIM_CR1_CEN; // Counter enable
+}
+
+void backlightEnable(uint8_t level)
+{
+  BACKLIGHT_COUNTER_REGISTER = 100 - level;
+}
+
+void backlightDisable()
+{
+  BACKLIGHT_COUNTER_REGISTER = 0;
+}
+
+uint8_t isBacklightEnabled()
+{
+  return BACKLIGHT_COUNTER_REGISTER != 0;
+}
+#endif

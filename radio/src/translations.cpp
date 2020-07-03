@@ -207,6 +207,7 @@ const char STR_MOVE_PLUS[] = TR_MOVE_PLUS;
 const char STR_JOYSTICK_RF[] = TR_JOYSTICK_RF;
 const char STR_TURN_OFF_RF[] = TR_TURN_OFF_RF;
 const char STR_ROTARY_REVERSE[] = TR_ROTARY_REVERSE;
+const char STR_UPDATE_CROSSFIRE[] = TR_UPDATE_CROSSFIRE;
 #endif
 const char STR_TX[] = TR_TXnRX;
 const char STR_NODATA[] = TR_NODATA;

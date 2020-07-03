@@ -2,30 +2,44 @@ option(DISK_CACHE "Enable SD card disk cache" OFF)
 option(SHUTDOWN_CONFIRMATION "Shutdown confirmation" OFF)
 option(LCD_DUAL_BUFFER "Dual LCD Buffer" OFF)
 
+if (PCB STREQUAL MAMBO)
+option(PXX1 "PXX1 protocol support" ON)
+option(PXX2 "PXX2 protocol support" ON)
+option(INTERNAL_MODULE_PXX1 "Support for PXX1 internal module" OFF)
+option(INTERNAL_MODULE_PXX2 "Support for PXX2 internal module" OFF)
+endif()
+
 option(CROSSFIRE_TASK "Crossfire task" YES)
 set(PWR_BUTTON "PRESS" CACHE STRING "Pwr button type (PRESS/SWITCH)")
 set(STICKS "STANDARD" CACHE STRING "Sticks type (STANDARD/HORUS)")
 set(CPU_TYPE STM32F4)
 set(CPU_TYPE_FULL STM32F407xE)  # for size report
-set(LINKER_SCRIPT targets/tango/stm32f4_flash.ld)
+set(LINKER_SCRIPT targets/tbs/stm32f4_flash.ld)
 set(RTC_BACKUP_RAM YES)
 set(HAPTIC YES)
 set(LUA_EXPORT lua_export_tango)
-set(FLAVOUR tango)
+if (PCB STREQUAL TANGO)
+  set(FLAVOUR tango)
+  add_definitions(-DSTM32F40_41xxx -DPCBTANGO)
+elseif(PCB STREQUAL MAMBO)
+  set(FLAVOUR mambo)
+  add_definitions(-DSTM32F40_41xxx -DPCBMAMBO)
+endif()
 set(TBS_RELEASE "Used to build TBS released firmware" ON)
-add_definitions(-DSTM32F40_41xxx -DPCBTANGO)
 add_definitions(-DEEPROM_SDCARD)
 add_definitions(-DEEPROM_VARIANT=0x8000)
 add_definitions(-DPWR_BUTTON_${PWR_BUTTON})
 add_definitions(-DSOFTWARE_VOLUME)
 
 if(DEBUG)
-  set(XJT OFF CACHE BOOL "Disable XJT")
-  set(MODULE_SIZE_STD OFF CACHE BOOL "Disable MODULE_SIZE_STD")
-  set(PPM OFF CACHE BOOL "Disable PPM")
-  set(DSM2 OFF CACHE BOOL "Disable DSM2")
-  set(SBUS OFF CACHE BOOL "Disable SBUS")
-  set(MULTIMODULE OFF CACHE BOOL "Disable MULTIMODULE")
+  if(DEBUG AND PCB STREQUAL TANGO)
+    set(XJT OFF CACHE BOOL "Disable XJT")
+    set(MODULE_SIZE_STD OFF CACHE BOOL "Disable MODULE_SIZE_STD")
+    set(PPM OFF CACHE BOOL "Disable PPM")
+    set(DSM2 OFF CACHE BOOL "Disable DSM2")
+    set(SBUS OFF CACHE BOOL "Disable SBUS")
+    set(MULTIMODULE OFF CACHE BOOL "Disable MULTIMODULE")
+  endif()
   set(AUX_SERIAL_DRIVER ../common/arm/stm32/aux_serial_driver.cpp)
 endif()
 
@@ -54,7 +68,7 @@ add_definitions(-DENABLE_ROTARY_REVERSE)
 add_definitions(-DAGENT)
 set(TARGET_SRC
   ${TARGET_SRC}
-  ../tango/usbd_hid_agent.c
+  ../tbs/usbd_hid_agent.c
   )
   
 set(FIRMWARE_TARGET_SRC
@@ -69,7 +83,7 @@ set(FIRMWARE_TARGET_SRC
 set(HSE_VALUE 8000000)
 set(SDCARD YES)
 set(EEPROM SDCARD)
-set(TARGET_DIR tango)
+set(TARGET_DIR tbs)
 set(PPM_LIMITS_SYMETRICAL YES)
 
 set(RADIO_DEPENDENCIES
@@ -79,7 +93,7 @@ set(RADIO_DEPENDENCIES
   )
 
 if(SPLASH STREQUAL OFF)
-  message(FATAL_ERROR "Option SPLASH=OFF not supported on Tango2")
+  message(FATAL_ERROR "Option SPLASH=OFF not supported on TANGO2/MAMBO")
 endif()
 
 add_definitions(-DAUDIO -DVOICE -DRTCLOCK)
@@ -115,11 +129,17 @@ set(FIRMWARE_TARGET_SRC
   ${FIRMWARE_TARGET_SRC}
   ${LCD_DRIVER}
   board.cpp
-  led_driver.cpp
   backlight_driver.cpp
   ../common/arm/stm32/pwr_driver.cpp
   ../common/arm/stm32/sdio_sd.c
   )
+
+if (PCB STREQUAL TANGO)
+  set(FIRMWARE_TARGET_SRC
+    ${FIRMWARE_TARGET_SRC}
+    led_driver.cpp
+    )
+endif()
 
 if(LCD_DUAL_BUFFER)
   add_definitions(-DLCD_DUAL_BUFFER)
@@ -134,13 +154,13 @@ set(STM32LIB_SRC
 
 set(FIRMWARE_DEPENDENCIES ${FIRMWARE_DEPENDENCIES} ${BITMAPS_TARGET})
 
-if(PYTHONINTERP_FOUND)
+if(PYTHONINTERP_FOUND)    
   add_custom_command(
     OUTPUT ${PROJECT_BINARY_DIR}/radio/src/datacopy.cpp
     WORKING_DIRECTORY ${RADIO_DIRECTORY}/src
-    COMMAND ${PYTHON_EXECUTABLE} ${RADIO_DIRECTORY}/util/generate_datacopy.py datastructs.h -DPCBTANGO -DCPUARM -DSTM32F4 -DSTM32F40_41xxx  -DBACKUP -DSIMU -I. -Itargets/tango -Itargets/common/arm/stm32 -I${THIRDPARTY_DIR} -I${THIRDPARTY_DIR}/STM32F4xx_DSP_StdPeriph_Lib_V1.4.0/Libraries/CMSIS/Device/ST/STM32F4xx/Include ${arm_gcc_include_path} > ${PROJECT_BINARY_DIR}/radio/src/datacopy.cpp
+    COMMAND ${PYTHON_EXECUTABLE} ${RADIO_DIRECTORY}/util/generate_datacopy.py datastructs.h -DPCB${PCB} -DCPUARM -DSTM32F4 -DSTM32F40_41xxx  -DBACKUP -DSIMU -I. -Itargets/tbs -Itargets/common/arm/stm32 -I${THIRDPARTY_DIR} -I${THIRDPARTY_DIR}/STM32F4xx_DSP_StdPeriph_Lib_V1.4.0/Libraries/CMSIS/Device/ST/STM32F4xx/Include ${arm_gcc_include_path} > ${PROJECT_BINARY_DIR}/radio/src/datacopy.cpp
     DEPENDS ${RADIO_DIRECTORY}/src/datastructs.h ${RADIO_DIRECTORY}/util/generate_datacopy.py
-  )
+    )    
   add_custom_target(datacopy
     DEPENDS ${PROJECT_BINARY_DIR}/radio/src/datacopy.cpp
     )

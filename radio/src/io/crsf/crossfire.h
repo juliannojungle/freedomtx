@@ -90,7 +90,7 @@ typedef enum {
   #define bkregClrStatusFlag(...)
   #define boardSetSkipWarning()
   #define crossfirePowerOff()
-  #define crossfireTurnOffRf()
+  #define crossfireTurnOffRf(...)
   #define crossfireTurnOnRf()
 #else
   uint32_t readBackupReg(uint8_t index);
@@ -100,8 +100,9 @@ typedef enum {
   void bkregClrStatusFlag(uint32_t flag);
   void boardSetSkipWarning();
   void crossfirePowerOff();
-  void crossfireTurnOffRf();
+  void crossfireTurnOffRf(bool ask);
   void crossfireTurnOnRf();
+  bool isCrossfirePowerOn();
 #endif
 
 #define RTOS_API_VERSION                0x103
@@ -114,10 +115,10 @@ struct CrossfireSharedData {
   uint32_t *trampoline;
   uint8_t taskFlag[TASK_FLAG_MAX];
   volatile uint32_t crsfFlag;
-  uint32_t reserverd1[16];
+  uint32_t reserved1[16];
   Fifo<uint8_t, CROSSFIRE_FIFO_SIZE> crsf_tx;   //from XF to OpenTX
   Fifo<uint8_t, CROSSFIRE_FIFO_SIZE> crsf_rx;   //from OpenTX to XF
-  uint32_t reserverd2[64];
+  uint32_t reserved2[64];
   int16_t sticks[NUM_STICKS];
   uint8_t stick_state:5;
   uint8_t gim_select:2;

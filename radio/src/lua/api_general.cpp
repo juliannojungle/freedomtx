@@ -50,10 +50,8 @@
   #include "lua/lua_exports_xlite.inc"
 #elif defined(PCBTARANIS)
   #include "lua/lua_exports_x9d.inc"
-#elif defined(PCBTANGO)
+#elif defined(PCBTANGO) || defined(PCBMAMBO)
   #include "lua/lua_exports_tango.inc"
-#elif defined(PCBMAMBO)
-  #include "lua/lua_exports_mambo.inc"
 #endif
 
 #if defined(SIMU)
@@ -735,8 +733,8 @@ static int luaCrossfireTelemetryPush(lua_State * L)
     lua_pushboolean(L, false);
   }
   return 1;
-#endif
 }
+#endif
 
 #if defined(PCBTANGO) || defined(PCBMAMBO)
 static uint8_t devId = 0;

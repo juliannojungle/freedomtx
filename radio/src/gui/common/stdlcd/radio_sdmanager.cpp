@@ -199,6 +199,12 @@ void onSdManagerMenu(const char * result)
     getSelectionFullPath(lfn);
     pushMenuTextView(lfn);
   }
+#if (defined(PCBTANGO) && !defined DEBUG) || defined(PCBMAMBO)
+  else if (result == STR_FLASH_EXTERNAL_MULTI) {
+    getSelectionFullPath(lfn);
+    multiFlashFirmware(EXTERNAL_MODULE, lfn);
+  }
+#endif
 #if defined(PCBTARANIS)
   else if (result == STR_FLASH_BOOTLOADER) {
     getSelectionFullPath(lfn);

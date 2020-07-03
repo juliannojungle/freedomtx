@@ -22,6 +22,11 @@
 
 void extmoduleStop()
 {
+#if defined(PCBTANGO)
+  if (IS_PCBREV_01())
+    return;
+#endif
+
   NVIC_DisableIRQ(EXTMODULE_TIMER_DMA_STREAM_IRQn);
   NVIC_DisableIRQ(EXTMODULE_TIMER_CC_IRQn);
   EXTMODULE_TIMER_DMA_STREAM->CR &= ~DMA_SxCR_EN; // Disable DMA
@@ -43,9 +48,7 @@ void extmoduleStop()
   EXTMODULE_TIMER->DIER &= ~(TIM_DIER_CC2IE | TIM_DIER_UDE);
   EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
 
-  if (!IS_TRAINER_EXTERNAL_MODULE()) {
-    EXTERNAL_MODULE_PWR_OFF();
-  }
+  EXTERNAL_MODULE_PWR_OFF();
 }
 
 void extmodulePpmStart()
@@ -316,17 +319,29 @@ void extmoduleSendInvertedByte(uint8_t byte)
 
   __disable_irq();
   time = getTmr2MHz();
+#if defined(PCBTANGO)
+  GPIO_ResetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+#else
   GPIO_SetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+#endif
   while ((uint16_t) (getTmr2MHz() - time) < 34)	{
     // wait
   }
   time += 34;
   for (i = 0 ; i < 8 ; i += 1) {
     if (byte & 1) {
+#if defined(PCBTANGO)
+      GPIO_SetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+#else
       GPIO_ResetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+#endif
     }
     else {
+#if defined(PCBTANGO)
+      GPIO_ResetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+#else
       GPIO_SetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+#endif
     }
     byte >>= 1 ;
     while ((uint16_t) (getTmr2MHz() - time) < 35) {
@@ -334,7 +349,11 @@ void extmoduleSendInvertedByte(uint8_t byte)
     }
     time += 35 ;
   }
+#if defined(PCBTANGO)
+  GPIO_SetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+#else
   GPIO_ResetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+#endif
   __enable_irq() ;	// No need to wait for the stop bit to complete
   while ((uint16_t) (getTmr2MHz() - time) < 34) {
     // wait

@@ -42,7 +42,11 @@ void rotaryEncoderCheck();
 #include "STM32F4xx_DSP_StdPeriph_Lib_V1.4.0/Libraries/STM32F4xx_StdPeriph_Driver/inc/stm32f4xx_fmc.h"
 #endif
 
+#if defined(PCBTANGO)
 #define MY_DEVICE_NAME                  "Tango II"
+#elif defined(PCBMAMBO)
+#define MY_DEVICE_NAME                  "Mambo"
+#endif
 #define FLASHSIZE                       0xC0000
 #define BOOTLOADER_SIZE                 0xC000
 #define FIRMWARE_ADDRESS                0x08000000
@@ -70,14 +74,23 @@ void boardOff();
 // Timers driver
 void init2MhzTimer();
 void init5msTimer();
+// Telemetry driver
+void check_telemetry_exti();
 
 // PCBREV driver
+#if defined(PCBTANGO)
 enum {
-  // Tango2
   PCBREV_Tango2_Unknown = 0,
   PCBREV_Tango2_V1,
   PCBREV_Tango2_V2,
 };
+#elif defined(PCBMAMBO)
+enum {
+  PCBREV_Mambo_Unknown = 0,
+  PCBREV_Mambo_V1,
+  PCBREV_Mambo_V2,
+};
+#endif
 
 // SD driver
 #define BLOCK_SIZE                      512 /* Block Size in Bytes */
@@ -204,21 +217,28 @@ enum EnumSwitchesPositions
   SW_SF2,
 };
 
+#if defined(PCBTANGO)
 #define NUM_SWITCHES                    6
 #define STORAGE_NUM_SWITCHES            NUM_SWITCHES
 #define DEFAULT_SWITCH_CONFIG           (SWITCH_TOGGLE << 10) + (SWITCH_TOGGLE << 8) + (SWITCH_2POS << 6) + (SWITCH_3POS << 4) + (SWITCH_3POS << 2) + (SWITCH_2POS << 0)
 
 #define STORAGE_NUM_SWITCHES_POSITIONS  (STORAGE_NUM_SWITCHES * 3)
+extern uint8_t g_trimEditMode;
+extern uint8_t g_trimState;
+#elif defined(PCBMAMBO)
+#define STORAGE_NUM_SWITCHES          NUM_SWITCHES
+#define DEFAULT_SWITCH_CONFIG         (SWITCH_TOGGLE << 10) + (SWITCH_3POS << 8) + (SWITCH_3POS << 6) + (SWITCH_3POS << 4) + (SWITCH_3POS << 2) + (SWITCH_2POS << 0)
+#define DEFAULT_POTS_CONFIG           (POT_WITH_DETENT << 2)+ (POT_WITH_DETENT << 0)
+#define DEFAULT_SLIDERS_CONFIG        SLIDER_NONE
 
+#define NUM_SWITCHES                        6
+#define STORAGE_NUM_SWITCHES_POSITIONS  (STORAGE_NUM_SWITCHES * 3)
+#endif
 void keysInit();
 uint8_t keyState(uint8_t index);
 uint32_t switchState(uint8_t index);
 uint32_t readKeys();
 uint32_t readTrims();
-
-extern uint8_t g_trimEditMode;
-extern uint8_t g_trimState;
-
 
 #define TRIMS_PRESSED()                 (readTrims())
 #define KEYS_PRESSED()                  (readKeys())
@@ -246,11 +266,23 @@ enum Analogs {
   STICK2,
   STICK3,
   STICK4,
+#if defined(PCBMAMBO)
+  POT1,
+  POT_FIRST = POT1,
+  POT2,
+  POT_LAST = POT2,
+  SWITCH_B,
+  SWITCH_C,
+  SWITCH_D,
+  SWITCH_E,
+  TX_TRIM,
+#endif
   TX_VOLTAGE,
   TX_RTC_VOLTAGE,
   NUM_ANALOGS
 };
 
+#if defined(PCBTANGO)
 #define NUM_POTS                        0
 #define NUM_XPOTS                       0
 #define NUM_SLIDERS                     0
@@ -261,6 +293,25 @@ enum Analogs {
 #define STORAGE_NUM_POTS                0
 #define STORAGE_NUM_SLIDERS             0
 
+#define NUM_TRIMS_KEYS                  8
+#define STICKS_PWM_ENABLED()            false
+#elif defined(PCBMAMBO)
+#define NUM_POTS                        (POT_LAST-POT_FIRST+1)
+#define NUM_XPOTS                       2
+#define NUM_SLIDERS                     0
+#define NUM_TRIMS                       4
+#define NUM_MOUSE_ANALOGS               0
+#define NUM_DUMMY_ANAS                  0
+
+#define STORAGE_NUM_POTS                2
+#define STORAGE_NUM_SLIDERS             0
+
+#define NUM_MOUSE_ANALOGS               0
+#define STORAGE_NUM_MOUSE_ANALOGS       0
+
+#define NUM_TRIMS_KEYS                  8
+#define STICKS_PWM_ENABLED()            false
+#endif
 
 PACK(typedef struct {
   uint8_t pcbrev:2;
@@ -270,14 +321,17 @@ PACK(typedef struct {
 
 extern HardwareOptions hardwareOptions;
 
-#define NUM_TRIMS_KEYS                  8
-#define STICKS_PWM_ENABLED()            false
-
 enum CalibratedAnalogs {
   CALIBRATED_STICK1,
   CALIBRATED_STICK2,
   CALIBRATED_STICK3,
   CALIBRATED_STICK4,
+#if defined(PCBMAMBO)
+  CALIBRATED_POT_FIRST,
+  CALIBRATED_POT_LAST = CALIBRATED_POT_FIRST + NUM_POTS - 1,
+  CALIBRATED_SLIDER_FIRST,
+  CALIBRATED_SLIDER_LAST = CALIBRATED_SLIDER_FIRST + NUM_SLIDERS - 1,
+#endif
   NUM_CALIBRATED_ANALOGS
 };
 
@@ -294,8 +348,12 @@ uint16_t getBatteryVoltage();   // returns current battery voltage in 10mV steps
 #define BATTERY_MAX                   42 // 4.2V
 
 #define BATT_CALIB_OFFSET             5
+#if defined(PCBTANGO)
 #define BATT_SCALE                    (4.446f)
 #define BATT_SCALE2                   (4.162f)
+#elif defined(PCBMAMBO)
+#define BATT_SCALE                    (4.136f)
+#endif
 // BATT_SCALE = 12-bit max value * pd / ANALOG_MULTIPLIER / vref / multiplication
 //            = 4095 * 2/3 / 2 / vref / 100
 
@@ -351,26 +409,36 @@ void pwrResetHandler();
 
 // Backlight driver
 #define BACKLIGHT_TIMEOUT_MIN           2
-#define backlightInit()
-void backlightEnable(uint8_t level);
 #if defined(SIMU)
+  #define backlightInit()
   #define backlightDisable()
   #define BACKLIGHT_DISABLE()
   #define isBacklightEnabled()            true
   #define backlightEnable(level)
   #define BACKLIGHT_ENABLE()
 #else
+#if defined(PCBTANGO)
   #define backlightDisable()              lcdOff()
-  #define BACKLIGHT_DISABLE()             backlightDisable()
   #define isBacklightEnabled()            isLcdOn()
+#elif defined(PCBMAMBO)
+  void backlightInit(void);
+  void backlightDisable(void);
+  #define BACKLIGHT_DISABLE()             backlightDisable()
+  uint8_t isBacklightEnabled(void);
+#endif
+  void backlightEnable(uint8_t level);
+  #define BACKLIGHT_DISABLE()             backlightDisable()
   #define BACKLIGHT_ENABLE()              backlightEnable(g_eeGeneral.backlightBright)
 #endif
 
 void usbJoystickUpdate();
 #define USB_NAME                        "TBS"
 #define USB_MANUFACTURER                'T', 'B', 'S', ' ', ' ', ' ', ' ', ' '  /* 8 bytes */
+#if defined(PCBTANGO)
 #define USB_PRODUCT                     'T', 'a', 'n', 'g', 'o', ' ', '2', ' '  /* 8 Bytes */
-
+#else
+#define USB_PRODUCT                     'M', 'a', 'm', 'b', 'o', ' ', ' ', ' '  /* 8 Bytes */
+#endif
 #if defined(__cplusplus) && !defined(SIMU)
 }
 #endif
@@ -423,15 +491,22 @@ void extmoduleSendInvertedByte(uint8_t byte);
 #else
   #define EXTERNAL_MODULE_OFF()       EXTERNAL_MODULE_PWR_OFF()
 #endif
-#define IS_EXTERNAL_MODULE_ON()         (GPIO_ReadInputDataBit(EXTMODULE_PWR_GPIO, EXTMODULE_PWR_GPIO_PIN) == Bit_SET)
+#define IS_EXTERNAL_MODULE_ON()       (GPIO_ReadInputDataBit(EXTMODULE_PWR_GPIO, EXTMODULE_PWR_GPIO_PIN) == Bit_SET)
 
 // PCBREV driver
+#if defined(PCBTANGO)
 #define IS_PCBREV_01()                (hardwareOptions.pcbrev == PCBREV_Tango2_V1)
 #define IS_PCBREV_02()                (hardwareOptions.pcbrev == PCBREV_Tango2_V2)
+#endif
 
 // Charger
-#define IS_CHARGING_STATE()           (GPIO_ReadInputDataBit( CHARGER_STATE_GPIO, CHARGER_STATE_GPIO_PIN ) == Bit_RESET)
-#define IS_CHARGING_FAULT()           (GPIO_ReadInputDataBit( CHARGER_FAULT_GPIO, CHARGER_FAULT_GPIO_PIN ) == Bit_RESET)
+#if defined(PCBTANGO)
+  #define IS_CHARGING_STATE()         (usbPlugged() && GPIO_ReadInputDataBit( CHARGER_STATE_GPIO, CHARGER_STATE_GPIO_PIN ) == Bit_RESET)
+  #define IS_CHARGING_FAULT()         (usbPlugged() && GPIO_ReadInputDataBit( CHARGER_FAULT_GPIO, CHARGER_FAULT_GPIO_PIN ) == Bit_RESET)
+#else
+  #define IS_CHARGING_STATE()         (GPIO_ReadInputDataBit( CHARGER_STATE_GPIO, CHARGER_STATE_GPIO_PIN ) == Bit_RESET)
+  #define IS_CHARGING_FAULT()         (0)
+#endif
 
 // Audio driver
 void audioInit() ;
@@ -474,6 +549,7 @@ void auxSerialStop();
 // BT driver
 #define IS_BLUETOOTH_CHIP_PRESENT()     (false)
 
+#if defined(PCBTANGO)
 // Led driver
 void ledInit(void);
 void ledOff(void);
@@ -502,7 +578,23 @@ void lcdOn();
 void lcdOff();
 bool isLcdOn();
 void lcdAdjustContrast(uint8_t val);
+#elif defined(PCBMAMBO)
+// Led driver
+#define ledOff()
 
+// LCD driver
+#define LCD_W                           128
+#define LCD_H                           64
+#define LCD_DEPTH                       1
+#define IS_LCD_RESET_NEEDED()           true
+#define LCD_CONTRAST_MIN                0
+#define LCD_CONTRAST_MAX                30
+#define LCD_CONTRAST_DEFAULT            20
+void lcdInit();
+#define lcdOn()
+void lcdInitFinish();
+void lcdOff();
+#endif
 // TODO lcdRefreshWait() stub in simpgmspace and remove LCD_DUAL_BUFFER
 #if defined(LCD_DMA) && !defined(LCD_DUAL_BUFFER) && !defined(SIMU)
 void lcdRefreshWait();

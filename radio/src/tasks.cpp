@@ -347,8 +347,8 @@ TASK_FUNCTION(systemTask)
         NVIC_SystemReset();
       }
     }
-
-    crsfSharedFifoHandler();
+    if (isCrossfirePowerOn())
+      crsfSharedFifoHandler();
 #if defined(AGENT)
     AgentHandler();
 #endif

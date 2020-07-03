@@ -961,7 +961,7 @@ void menuModelSetup(event_t event)
             if (g_model.moduleData[moduleIdx].type == MODULE_TYPE_NONE)
               crossfireTurnOnRf();
             else
-              crossfireTurnOffRf();
+              crossfireTurnOffRf(false);
 #endif
           }
           else if (g_model.moduleData[moduleIdx].type == MODULE_TYPE_NONE) {

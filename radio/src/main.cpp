@@ -80,7 +80,7 @@ void handleUsbConnection()
       }
       else if (getSelectedUsbMode() == USB_JOYSTICK_MODE) {
 #if defined(CROSSFIRE_TASK)
-        crossfireTurnOffRf();
+        crossfireTurnOffRf(true);
 #endif
       }
       usbStart();

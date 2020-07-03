@@ -23,7 +23,7 @@
 Fifo<uint8_t, TELEMETRY_FIFO_SIZE> telemetryFifo;
 uint32_t telemetryErrors = 0;
 
-#if !defined DEBUG
+#if (defined(PCBTANGO) && !defined DEBUG) || defined(PCBMAMBO)
 static void telemetryInitDirPin()
 {
   GPIO_InitTypeDef GPIO_InitStructure;
@@ -33,6 +33,10 @@ static void telemetryInitDirPin()
   GPIO_InitStructure.GPIO_Pin   = TELEMETRY_DIR_GPIO_PIN;
   GPIO_Init(TELEMETRY_DIR_GPIO, &GPIO_InitStructure);
   TELEMETRY_DIR_INPUT();
+
+  GPIO_InitStructure.GPIO_Pin = TELEMETRY_RX_POLARITY_RX_PIN;
+  GPIO_Init(TELEMETRY_RX_POLARITY_GPIO, &GPIO_InitStructure);
+  TELEMETRY_RX_POLARITY_INVERT();
 }
 
 void telemetryPortInit(uint32_t baudrate, uint8_t mode)

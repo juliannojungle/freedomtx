@@ -310,6 +310,10 @@ void displayBattVoltage()
   lcdDrawSolidFilledRect(VBATT_X - 25, VBATT_Y + 9, 21, 5);
   lcdDrawSolidVerticalLine(VBATT_X - 4, VBATT_Y + 10, 3);
   uint8_t count = GET_TXBATT_BARS(20);
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+  if (IS_CHARGING_STATE())
+    count = (get_tmr10ms() % 100) * count / 100;
+#endif
   for (uint8_t i = 0; i < count; i += 2)
     lcdDrawSolidVerticalLine(VBATT_X - 24 + i, VBATT_Y + 10, 3);
   if (!IS_TXBATT_WARNING() || BLINK_ON_PHASE)

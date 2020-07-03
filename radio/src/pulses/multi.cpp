@@ -132,7 +132,7 @@ void setupPulsesMulti(uint8_t moduleIdx)
 {
   static int counter[2] = {0,0}; //TODO
   static uint8_t invert[2] = {0x00,        //internal
-#if defined(PCBTARANIS) || defined(PCBHORUS)
+#if defined(PCBTARANIS) || defined(PCBHORUS) || defined(PCBMAMBO) || defined(PCBTANGO)
     0x08        //external
 #else
     0x00	//external
