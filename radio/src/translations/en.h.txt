@@ -511,6 +511,10 @@
 #define TR_ALARMS_LABEL                "Alarms"
 #define TR_BATTERY_RANGE               TR("Batt. range", "Battery meter range")
 #define TR_BATTERYWARNING              INDENT "Battery low"
+#if defined(BATT_CRITICAL_SHUTDOWN)
+  #define TR_CRITICALBATTERYLEVEL      "Critical Batt. Level"
+  #define TR_SHUTDOWNINXXS             "Shutdown In xxs?"
+#endif
 #define TR_INACTIVITYALARM             INDENT "Inactivity"
 #define TR_MEMORYWARNING               INDENT "Memory low"
 #define TR_ALARMWARNING                INDENT "Sound off"
@@ -581,7 +585,7 @@
   #define TR_MENUWHENDONE              CENTER "\006" TR_ENTER " WHEN DONE"
   #define TR_JOYSTICK_RF               "RF in Joystick Mode"
   #define TR_TURN_OFF_RF               "Turn off RF?"
-  #define TR_ROTARY_REVERSE            "Rotary Reverse"
+  #define TR_INVERT_ROTARY             "Invert Rotary"
   #define TR_UPDATE_CROSSFIRE          "Pls Update Crossfire"
 #else
   #define TR_MENUTOSTART               CENTER "\010" TR_ENTER " TO START"
@@ -656,7 +660,7 @@
 #define TR_MONITOR_MIXER_DESC          "Mixers"
 #if defined(PCBTANGO) || defined(PCBMAMBO)
     #define TR_CROSSFIRE               "Crossfire"
-    #define TR_RECEIVER_NUM            TR("Model Match", "Receiver No.")
+    #define TR_RECEIVER_NUM            TR("ModelMatch", "Receiver No.")
 #else
     #define TR_RECEIVER_NUM            TR("RxNum", "Receiver No.")
 #endif

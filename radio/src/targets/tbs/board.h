@@ -344,6 +344,7 @@ extern uint16_t adcValues[NUM_ANALOGS];
 uint16_t getBatteryVoltage();   // returns current battery voltage in 10mV steps
 // 1 x Li-Ion
 #define BATTERY_WARN                  35 // 3.5V
+#define BATTERY_CRITICAL              32 // 3.2V
 #define BATTERY_MIN                   34 // 3.4V
 #define BATTERY_MAX                   42 // 4.2V
 

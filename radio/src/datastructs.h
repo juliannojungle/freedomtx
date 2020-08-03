@@ -752,9 +752,9 @@ PACK(struct TrainerData {
   #define BUZZER_FIELD int8_t spare4:2
 #endif
 
-#if defined(ENABLE_ROTARY_REVERSE)
+#if defined(ENABLE_ROTARY_INVERSE)
   #define ROTARY_MODE \
-    NOBACKUP(uint8_t enableRotaryReverse:1);
+    NOBACKUP(uint8_t enableRotaryInverse:1);
 #else
   #define ROTARY_MODE
 #endif

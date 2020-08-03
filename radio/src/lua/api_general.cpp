@@ -449,26 +449,6 @@ When called without parameters, it will only return the status of the output buf
 
 static int luaSportTelemetryPush(lua_State * L)
 {
-#if defined(PCBTANGO) || defined(PCBMAMBO)
-  if (!IS_EXTERNAL_MODULE_ENABLED()) {
-    if (lua_gettop(L) == 0) {
-      lua_pushboolean(L, isSportOutputBufferAvailable());
-    }
-    else if (isSportOutputBufferAvailable()) {
-      SportTelemetryPacket packet;
-      packet.physicalId = getDataId(luaL_checkunsigned(L, 1));
-      packet.primId = luaL_checkunsigned(L, 2);
-      packet.dataId = luaL_checkunsigned(L, 3);
-      packet.value = luaL_checkunsigned(L, 4);
-      sportOutputPushPacket(&packet);
-      lua_pushboolean(L, true);
-    }
-    else {
-      lua_pushboolean(L, false);
-    }
-    return 1;
-  }
-#endif
   if (!IS_FRSKY_SPORT_PROTOCOL()) {
     lua_pushnil(L);
     return 1;

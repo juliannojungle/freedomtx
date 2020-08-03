@@ -451,7 +451,6 @@ void menuMainView(event_t event)
   static int8_t idx = -1;
   static tmr10ms_t enterTime;
   static bool last_enter = false;
-  uint8_t view_cnt = g_model.timers[1].mode ? VIEW_COUNT : VIEW_COUNT - 1;
 #endif
   uint8_t view = g_eeGeneral.view;
   uint8_t view_base = view & 0x0f;
@@ -563,19 +562,15 @@ void menuMainView(event_t event)
       storageDirty(EE_GENERAL);
       break;
 #else
-#if defined(PCBTANGO)
-    case EVT_KEY_NEXT_VIEW:
-      if (g_trimEditMode == EDIT_TRIM_DISABLED) {
-        g_eeGeneral.view = (view_base == 0 ? view_cnt - 1 : view_base - 1);
-        storageDirty(EE_GENERAL);
-      }
-      break;
-#else
     case EVT_KEY_NEXT_VIEW:
       g_eeGeneral.view = (view_base == 0 ? VIEW_COUNT - 1 : view_base - 1);
+#if defined(PCBTANGO)
+      if (g_eeGeneral.view == VIEW_TIMER2 && !g_model.timers[1].mode) {
+        g_eeGeneral.view--;
+      }
+#endif
       storageDirty(EE_GENERAL);
       break;
-#endif
 #endif
 
 #if defined(EVT_KEY_STATISTICS)

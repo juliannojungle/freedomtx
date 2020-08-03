@@ -220,6 +220,60 @@ void checkBatteryAlarms()
   if (IS_TXBATT_WARNING()) {
     AUDIO_TX_BATTERY_LOW();
     // TRACE("checkBatteryAlarms(): battery low");
+  #if defined(BATT_CRITICAL_SHUTDOWN)
+    #define DOWNCOUNT_PERIOD    10    // 10s
+    #define WARNING_PERIOD      60    // 60s
+    static uint32_t last_warning_time = 0;
+    static uint8_t counter = 0;
+    static char warning[sizeof(TR_SHUTDOWNINXXS)];
+    char counter_str[3];
+    bool forced_shutdown = false;
+    if (IS_TXBATT_CRITICAL()) {
+      if (!last_warning_time || (get_tmr10ms() - last_warning_time) / 100 >= WARNING_PERIOD) {
+        last_warning_time = get_tmr10ms();
+        counter = DOWNCOUNT_PERIOD;
+      }
+      
+      while (counter){
+        if ((get_tmr10ms() - last_warning_time) / 100 < DOWNCOUNT_PERIOD) {
+          counter = DOWNCOUNT_PERIOD - (get_tmr10ms() - last_warning_time) / 100;
+        }
+        else {
+          counter = 0;
+          forced_shutdown = true;
+        }
+
+        strcpy(warning, STR_SHUTDOWNINXXS);
+        sprintf(counter_str, "%2d", counter);
+        memcpy(&warning[sizeof(TR_SHUTDOWNINXXS)-5], counter_str, 2);
+        lcdRefreshWait();
+        lcdClear();
+        POPUP_CONFIRMATION(STR_CRITICALBATTERYLEVEL, nullptr);              
+        SET_WARNING_INFO(warning, sizeof(TR_SHUTDOWNINXXS), 0);
+        event_t evt = getEvent(false);
+        DISPLAY_WARNING(evt);
+        lcdRefresh();
+
+        if (warningResult) {
+          warningResult = 0;
+          forced_shutdown = true;
+          counter = 0;
+        }
+        else if (!warningText) {
+          forced_shutdown = false;
+          counter = 0;
+        }
+      }
+
+      if (forced_shutdown) {
+        TRACE("checkBatteryAlarms(): shutdown due to critical battery level");
+        boardOff();
+      }
+      else {
+        CLEAR_POPUP();
+      }
+    }
+  #endif
   }
 #if defined(PCBSKY9X)
   else if (g_eeGeneral.mAhWarn && (g_eeGeneral.mAhUsed + Current_used * (488 + g_eeGeneral.txCurrentCalibration)/8192/36) / 500 >= g_eeGeneral.mAhWarn) { // TODO move calculation into board file

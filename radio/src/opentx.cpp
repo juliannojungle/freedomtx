@@ -425,6 +425,14 @@ void applyDefaultTemplate()
     mix->weight = 100;
     mix->srcRaw = i+1;
   }
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+  for (int i = 0; i < NUM_SWITCHES; i++) {
+    MixData * mix = mixAddress(i+4);
+    mix->destCh = i+4;
+    mix->weight = 100;
+    mix->srcRaw = MIXSRC_SA+i;
+  }
+#endif
 }
 
 #if defined(EEPROM)
@@ -1822,7 +1830,11 @@ inline uint32_t PWR_PRESS_DURATION_MIN()
   if (g_eeGeneral.version != EEPROM_VER)
     return 200;
 
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+  return g_eeGeneral.pwrOnSpeed * 100;
+#else
   return (2 - g_eeGeneral.pwrOnSpeed) * 100;
+#endif
 }
 
 constexpr uint32_t PWR_PRESS_DURATION_MAX = 500; // 5s
@@ -1846,6 +1858,9 @@ void runStartupAnimation()
       isPowerOn = true;
       pwrOn();
       haptic.play(15, 3, PLAY_NOW);
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+      break;
+#endif
     }
   }
 
@@ -2013,7 +2028,7 @@ void opentxInit()
 
 #if (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
   // read the settings (especailly power on delay) from sdcard first then run the startup animation
-  if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE() || bkregGetStatusFlag(STORAGE_ERASE_STATUS)) {
+  if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE() || bkregGetStatusFlag(STORAGE_ERASE_STATUS) || getBoardOffState()) {
     if(bkregGetStatusFlag(STORAGE_ERASE_STATUS))
       bkregClrStatusFlag(STORAGE_ERASE_STATUS);
     pwrOn();
@@ -2071,8 +2086,22 @@ void opentxInit()
   }
 
   if (!globalData.unexpectedShutdown) {
-#if (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
-    if(getBoardOffState()) opentxStart(OPENTX_START_NO_SPLASH | OPENTX_START_NO_CHECKS); else    
+#if defined(PCBTANGO)
+    bool low_voltage = false;
+#if defined(BATT_CRITICAL_SHUTDOWN)
+    uint8_t cnt = 0;
+    uint32_t timestamp = 0;
+    while(1) {
+      if (get_tmr10ms() != timestamp) {
+        timestamp = get_tmr10ms();
+        getADC();
+        if (cnt++ >= 10)
+          break;
+      }
+    }
+    low_voltage = getBatteryVoltage() / 10 <= BATTERY_CRITICAL ? true : false;
+#endif
+    if(getBoardOffState() || low_voltage ) opentxStart(OPENTX_START_NO_SPLASH | OPENTX_START_NO_CHECKS); else    
 #endif
     opentxStart();
   }
@@ -2164,7 +2193,11 @@ int main()
 
 inline uint32_t PWR_PRESS_SHUTDOWN_DELAY()
 {
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+  return g_eeGeneral.pwrOffSpeed * 100;
+#else
   return (2 - g_eeGeneral.pwrOffSpeed) * 100;
+#endif
 }
 
 uint32_t pwr_press_time = 0;
@@ -2194,7 +2227,7 @@ uint32_t pwrCheck()
   if (pwr_check_state == PWR_CHECK_OFF) {
     return e_power_off;
   }
-  else if (pwrPressed()) {
+  else if (pwrPressed() && get_tmr10ms() > PWR_PRESS_SHUTDOWN_THRESHOD) {
     if (TELEMETRY_STREAMING()) {
       message = STR_MODEL_STILL_POWERED;
     }

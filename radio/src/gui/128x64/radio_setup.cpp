@@ -52,10 +52,10 @@ const unsigned char sticks[]  = {
   #define CASE_BATTGRAPH(x)
 #endif
 
-#if defined(ENABLE_ROTARY_REVERSE)
-  #define CASE_ROTARY_REVERSE(x) x,
+#if defined(ENABLE_ROTARY_INVERSE)
+  #define CASE_ROTARY_INVERSE(x) x,
 #else
-  #define CASE_ROTARY_REVERSE(x)
+  #define CASE_ROTARY_INVERSE(x)
 #endif
 
 enum {
@@ -115,7 +115,7 @@ enum {
   ITEM_RADIO_SETUP_RX_CHANNEL_ORD,
   ITEM_RADIO_SETUP_STICK_MODE_LABELS,
   ITEM_RADIO_SETUP_STICK_MODE,
-  CASE_ROTARY_REVERSE(ITEM_RADIO_SETUP_ROTARY_REVERSE)
+  CASE_ROTARY_INVERSE(ITEM_RADIO_SETUP_ROTARY_INVERSE)
   ITEM_RADIO_SETUP_MAX
 };
 
@@ -182,7 +182,7 @@ void menuRadioSetup(event_t event)
     CASE_STM32(0) // USB mode
     CASE_JACK_DETECT(0) // Jack mode
     0, COL_TX_MODE, 0, 
-    CASE_ROTARY_REVERSE(0)
+    CASE_ROTARY_INVERSE(0)
     1/*to force edit mode*/});
 
   if (event == EVT_ENTRY) {
@@ -549,16 +549,28 @@ void menuRadioSetup(event_t event)
 #if defined(PWR_BUTTON_PRESS)
       case ITEM_RADIO_SETUP_PWR_ON_SPEED:
         lcdDrawTextAlignedLeft(y, STR_PWR_ON_DELAY);
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+        lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.pwrOnSpeed, attr|LEFT);
+        lcdDrawChar(lcdLastRightPos, y, 's');
+        if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.pwrOnSpeed, 0, 3);
+#else
         lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, 2 - g_eeGeneral.pwrOnSpeed, attr|LEFT);
         lcdDrawChar(lcdLastRightPos, y, 's');
         if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.pwrOnSpeed, -1, 2);
+#endif
         break;
 
       case ITEM_RADIO_SETUP_PWR_OFF_SPEED:
         lcdDrawTextAlignedLeft(y, STR_PWR_OFF_DELAY);
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+        lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.pwrOffSpeed, attr|LEFT);
+        lcdDrawChar(lcdLastRightPos, y, 's');
+        if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.pwrOffSpeed, 0, 3);
+#else
         lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, 2 - g_eeGeneral.pwrOffSpeed, attr|LEFT);
         lcdDrawChar(lcdLastRightPos, y, 's');
         if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.pwrOffSpeed, -1, 2);
+#endif
         break;
 #endif
       
@@ -682,9 +694,9 @@ void menuRadioSetup(event_t event)
         }
         break;
 
-#if defined(ENABLE_ROTARY_REVERSE)
-      case ITEM_RADIO_SETUP_ROTARY_REVERSE:
-        g_eeGeneral.enableRotaryReverse = editCheckBox(g_eeGeneral.enableRotaryReverse, RADIO_SETUP_2ND_COLUMN, y, STR_ROTARY_REVERSE, attr, event);
+#if defined(ENABLE_ROTARY_INVERSE)
+      case ITEM_RADIO_SETUP_ROTARY_INVERSE:
+        g_eeGeneral.enableRotaryInverse = editCheckBox(g_eeGeneral.enableRotaryInverse, RADIO_SETUP_2ND_COLUMN, y, STR_INVERT_ROTARY, attr, event);
         break;
 #endif
     }

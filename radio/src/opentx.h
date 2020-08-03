@@ -290,6 +290,12 @@ void memswap(void * a, void * b, uint8_t size);
   #define pwrOffPressed()              (!pwrPressed())
 #endif
 
+#if defined(PCBTANGO) || defined(PCBMAMBO)
+  #define PWR_PRESS_SHUTDOWN_THRESHOD  300 // 3s
+#else
+  #define PWR_PRESS_SHUTDOWN_THRESHOD  0   // 0s
+#endif
+
 #define GET_LOWRES_POT_POSITION(i)     (getValue(MIXSRC_FIRST_POT+(i)) >> 4)
 #define SAVE_POT_POSITION(i)           g_model.potsWarnPosition[i] = GET_LOWRES_POT_POSITION(i)
 
@@ -1303,6 +1309,13 @@ inline bool IS_TXBATT_WARNING()
 {
   return g_vbat100mV <= g_eeGeneral.vBatWarn;
 }
+
+#if defined(BATT_CRITICAL_SHUTDOWN)
+inline bool IS_TXBATT_CRITICAL()
+{
+  return g_vbat100mV <= BATTERY_CRITICAL;
+}
+#endif
 
 enum TelemetryViews {
   TELEMETRY_CUSTOM_SCREEN_1,

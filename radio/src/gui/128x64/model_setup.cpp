@@ -225,6 +225,11 @@ inline uint8_t MODULE_TYPE_ROWS(int moduleIdx)
     return 1;
   }
 #endif
+#if defined(PCBTANGO)
+  else if (IS_PCBREV_01()) {
+    return HIDDEN_ROW;
+  }
+#endif
   else
     return 0;
 }
@@ -498,6 +503,13 @@ void menuModelSetup(event_t event)
       }
     }
 
+#if defined(PCBTANGO)
+    if (IS_PCBREV_01()) {
+      if (k > ITEM_MODEL_SETUP_USE_GLOBAL_FUNCTIONS && k < ITEM_MODEL_SETUP_CROSSFIRE_LABEL) {
+        continue;
+      }
+    }
+#endif
     uint8_t moduleIdx = CURRENT_MODULE_EDITED(k);
     LcdFlags blink = ((s_editMode>0) ? BLINK|INVERS : INVERS);
     LcdFlags attr = (sub == k ? blink : 0);
@@ -1744,11 +1756,18 @@ void menuModelSetup(event_t event)
         uint8_t moduleIdx = CURRENT_MODULE_EDITED(k);
         lcdDrawText(INDENT_WIDTH, y, STR_RECEIVER_NUM);
         lcdDrawNumber(MODEL_SETUP_2ND_COLUMN, y, g_model.header.modelId[moduleIdx], attr | LEADING0 | LEFT, 2);
+
         if (attr) {
+          uint8_t new_id = g_model.header.modelId[moduleIdx];
           CHECK_INCDEC_MODELVAR_ZERO(event, g_model.header.modelId[moduleIdx], getMaxRxNum(moduleIdx));
           if (checkIncDec_Ret) {
-            modelHeaders[g_eeGeneral.currModel].modelId[moduleIdx] = g_model.header.modelId[moduleIdx];
-            set_model_id_needed = true;
+            new_id = g_model.header.modelId[moduleIdx];
+          }
+          if (s_editMode == 0) {
+            if (modelHeaders[g_eeGeneral.currModel].modelId[moduleIdx] != new_id) {
+              modelHeaders[g_eeGeneral.currModel].modelId[moduleIdx] = new_id;
+              set_model_id_needed = true;
+            }
           }
         }
         break;

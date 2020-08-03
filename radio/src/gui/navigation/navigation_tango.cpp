@@ -53,7 +53,7 @@ void onSwitchLongEnterPress(const char * result)
 int checkIncDec(event_t event, int val, int i_min, int i_max, unsigned int i_flags, IsValueAvailable isValueAvailable, const CheckIncDecStops &stops)
 {
   int newval = val;
-  bool rotary_reverse = g_eeGeneral.enableRotaryReverse;
+  bool rotary_reverse = g_eeGeneral.enableRotaryInverse;
 
   if (s_editMode>0 && ((event==EVT_ROTARY_RIGHT && !rotary_reverse) || (event==EVT_ROTARY_LEFT && rotary_reverse))) {
     newval += (min<int>(rotencSpeed, i_max-val) * param_step_value);

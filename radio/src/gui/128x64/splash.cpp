@@ -87,7 +87,11 @@ void drawDownload()
 {
   lcdClear();
   lcdDraw1bitBitmap(0, 0, download_lbm, 0, 0);
-  lcdDrawText(LCD_W>>1, LCD_H-FH, STR_UPDATE_CROSSFIRE, CENTERED);
+  if (get_crsf_flag(CRSF_FLAG_XF_UPDATE_REQUIRED))
+  {
+    clear_crsf_flag(CRSF_FLAG_XF_UPDATE_REQUIRED);
+    lcdDrawText(LCD_W>>1, LCD_H-FH, STR_UPDATE_CROSSFIRE, CENTERED);
+  }
   lcdRefresh();
   lcdRefreshWait();
 }

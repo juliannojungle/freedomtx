@@ -30,6 +30,7 @@ add_definitions(-DEEPROM_SDCARD)
 add_definitions(-DEEPROM_VARIANT=0x8000)
 add_definitions(-DPWR_BUTTON_${PWR_BUTTON})
 add_definitions(-DSOFTWARE_VOLUME)
+add_definitions(-DBATT_CRITICAL_SHUTDOWN)
 
 if(DEBUG)
   if(DEBUG AND PCB STREQUAL TANGO)
@@ -63,7 +64,7 @@ set(LCD_DRIVER lcd_driver_spi.cpp)
 set(GVAR_SCREEN model_gvars.cpp)
 
 add_definitions(-DESP_SERIAL)
-add_definitions(-DENABLE_ROTARY_REVERSE)
+add_definitions(-DENABLE_ROTARY_INVERSE)
 
 add_definitions(-DAGENT)
 set(TARGET_SRC

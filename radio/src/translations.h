@@ -276,6 +276,10 @@ extern const char STR_CONTRAST[];
 extern const char STR_ALARMS_LABEL[];
 extern const char STR_BATTERY_RANGE[];
 extern const char STR_BATTERYWARNING[];
+#if defined(BATT_CRITICAL_SHUTDOWN)
+extern const char STR_CRITICALBATTERYLEVEL[];
+extern const char STR_SHUTDOWNINXXS[];
+#endif
 extern const char STR_INACTIVITYALARM[];
 extern const char STR_MEMORYWARNING[];
 extern const char STR_ALARMWARNING[];
@@ -345,7 +349,7 @@ extern const char STR_RELEASE_STICK[];
 extern const char STR_MOVE_PLUS[];
 extern const char STR_JOYSTICK_RF[];
 extern const char STR_TURN_OFF_RF[];
-extern const char STR_ROTARY_REVERSE[];
+extern const char STR_INVERT_ROTARY[];
 extern const char STR_UPDATE_CROSSFIRE[];
 #endif
 extern const char STR_RXBATT[];

@@ -63,7 +63,6 @@ void menuCrossfireSetup(event_t event)
         lcdDrawText(0, y+10, "Crossfire Menu", attr);
         if (attr && event==EVT_KEY_BREAK(KEY_ENTER)) {
           s_editMode = 0;
-          allowNewSensors = !allowNewSensors;
 #if defined(LUA)
           // Start crossfire for TANGO
           luaExec("/CROSSFIRE/crossfire.lua");
