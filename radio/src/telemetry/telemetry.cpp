@@ -60,7 +60,7 @@ void processTelemetryData(uint8_t data)
 #endif
 
 #if defined(PCBTANGO)
-  if (IS_PCBREV_02() && IS_EXTERNAL_MODULE_ENABLED()) {
+  if (!IS_PCBREV_01() && IS_EXTERNAL_MODULE_ENABLED()) {
       processFrskyTelemetryData(data);
   }
 #elif defined(PCBMAMBO)

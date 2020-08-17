@@ -173,10 +173,14 @@ void usbJoystickUpdate()
 }
 
 #if defined(AGENT)
-#define USB_HID_FIFO_SIZE		          128
+#define USB_HID_FIFO_SIZE                       128
+#define USB_HID_INEP1_NUM                       1
+#define USB_HID_INEP1_TXFIFO_EMPTY              0x80U
+#define USB_HID_INEP1_TXFIFO_FREE_WORD          0x80U
+#define USB_HID_INEP1_TXFIFO_FREE_WORD_MASK     0xFFFFU
+#define LIBCRSF_BF_LINK_STATISTICS              0x14
 
 static Fifo<uint8_t, USB_HID_FIFO_SIZE> *hidTxFifo = 0;
-static Fifo<uint8_t, USB_HID_FIFO_SIZE> *hidTxFifoBackup = 0;
 
 void usbAgentWrite( uint8_t *pData )
 {
@@ -188,6 +192,11 @@ void usbAgentWrite( uint8_t *pData )
 static uint8_t isUsbIdle(){
   extern uint8_t ReportSent;
   return ReportSent;
+  // workaround for usb stuck during send data but the host app is not ready to receive.
+  uint8_t idle = (ReportSent &&
+                (USB_OTG_dev.regs.INEP_REGS[USB_HID_INEP1_NUM]->DIEPINT & USB_HID_INEP1_TXFIFO_EMPTY) &&
+                ((USB_OTG_dev.regs.INEP_REGS[USB_HID_INEP1_NUM]->DTXFSTS & USB_HID_INEP1_TXFIFO_FREE_WORD_MASK ) == USB_HID_INEP1_TXFIFO_FREE_WORD)) ? 1 : 0;
+  return idle;
 }
 
 void usb_tx(){
@@ -206,27 +215,13 @@ void usb_tx(){
     }
 
     memset(sendData, 0, HID_AGENT_IN_PACKET);
-    if(hidTxFifoBackup != 0 && hidTxFifoBackup->size() > 0 && isUsbIdle()){
-      for(uint8_t i = 0; i < HID_AGENT_IN_PACKET; i++){
-        if(!hidTxFifoBackup->pop(sendData[i])){
-          break;
-        }
-      }
-      USBD_AGENT_SendReport(&USB_OTG_dev, sendData, HID_AGENT_IN_PACKET);
-    }
     if(hidTxFifo != 0 && selectedUsbMode != USB_AGENT_MODE){
       free(hidTxFifo);
       hidTxFifo = 0;
     }
-    if(hidTxFifoBackup != 0 && hidTxFifoBackup->size() == 0){
-      free(hidTxFifoBackup);
-      hidTxFifoBackup = 0;
-    }
     isbusy = 0;
   }
 }
-
-#define LIBCRSF_BF_LINK_STATISTICS  0x14
 
 void CRSF_To_USB_HID( uint8_t *p_arr )
 {
@@ -240,22 +235,9 @@ void CRSF_To_USB_HID( uint8_t *p_arr )
 
   // block sending telemetry and opentx related to usb
   if( ( *(p_arr + LIBCRSF_TYPE_ADD ) != LIBCRSF_BF_LINK_STATISTICS ) && ( *(p_arr + LIBCRSF_TYPE_ADD) != LIBCRSF_OPENTX_RELATED ) ){
-    if(hidTxFifo != 0 && (USB_HID_FIFO_SIZE - hidTxFifo->size()) >= (uint16_t)(p_arr[LIBCRSF_LENGTH_ADD] + 2)){
+    if(hidTxFifo != 0 && hidTxFifo->hasSpace(p_arr[LIBCRSF_LENGTH_ADD] + 2)){
       for(uint8_t i = 0; i < HID_AGENT_IN_PACKET; i++){
         hidTxFifo->push(p_arr[i]);
-      }
-    }
-    else{
-      if(hidTxFifoBackup == 0 && selectedUsbMode == USB_AGENT_MODE && usbStarted()){
-        hidTxFifoBackup = (Fifo<uint8_t, USB_HID_FIFO_SIZE>*)malloc(sizeof(Fifo<uint8_t, USB_HID_FIFO_SIZE>));
-        if(hidTxFifoBackup != 0){
-          memset(hidTxFifoBackup, 0, sizeof(Fifo<uint8_t, USB_HID_FIFO_SIZE>));
-        }
-      }
-      if(hidTxFifoBackup != 0){
-        for(uint8_t i = 0; i < HID_AGENT_IN_PACKET; i++){
-          hidTxFifoBackup->push(p_arr[i]);
-        }
       }
     }
   }
@@ -266,14 +248,18 @@ void AgentHandler(){
   /* handle TBS Agent requests */
   extern uint8_t ReportReceived;
   extern uint8_t HID_Buffer[HID_AGENT_OUT_PACKET];
+  static _libCrsf_CRSF_PARSE_DATA HID_CRSF_Data;
+  uint8_t hid_buffer[HID_AGENT_OUT_PACKET];
 
   usb_tx();
 
-  if(ReportReceived){
+  while(ReportReceived){
+    // making a copy of HID_Buffer is a workaround for preventing changing data in hid_buffer during parsing crsf data,
+    ReportReceived = 2;
+    memcpy(hid_buffer, HID_Buffer, HID_AGENT_OUT_PACKET);
     ReportReceived = 0;
-    static _libCrsf_CRSF_PARSE_DATA HID_CRSF_Data;
     for( uint8_t i = 0; i < HID_AGENT_OUT_PACKET; i++ ){
-      if ( libCrsf_CRSF_Parse( &HID_CRSF_Data, HID_Buffer[i] )) {
+      if ( libCrsf_CRSF_Parse( &HID_CRSF_Data, hid_buffer[i] )) {
         libCrsf_CRSF_Routing( USB_HID, HID_CRSF_Data.Payload );
         break;
       }

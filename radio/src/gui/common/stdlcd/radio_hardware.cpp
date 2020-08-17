@@ -186,12 +186,12 @@ enum {
 
 #if !defined(PCBTANGO) && !defined(PCBMAMBO)
   ITEM_RADIO_HARDWARE_JITTER_FILTER,
-#endif
   ITEM_RADIO_HARDWARE_RAS,
 #if defined(SPORT_UPDATE_PWR_GPIO)
   ITEM_RADIO_HARDWARE_SPORT_UPDATE_POWER,
 #endif
   ITEM_RADIO_HARDWARE_DEBUG,
+#endif
 #if defined(EEPROM_RLC)
   ITEM_RADIO_BACKUP_EEPROM,
   ITEM_RADIO_FACTORY_RESET,
@@ -295,12 +295,18 @@ void onHardwareAntennaSwitchConfirm(const char * result)
 #endif
 
 #if !defined(PCBTANGO) && !defined(PCBMAMBO)
-  #define ADC_FILTER                     0,
+  #define ADC_FILTER_ROW                 0,
 #else
-  #define ADC_FILTER
+  #define ADC_FILTER_ROW
 #endif
 
-#if defined(AUX_SERIAL)
+#if !defined(PCBTANGO) && !defined(PCBMAMBO)
+  #define HARDWARE_RAS_ROW               READONLY_ROW,
+#else
+  #define HARDWARE_RAS_ROW
+#endif
+
+#if defined(AUX_SERIAL) && !defined(PCBTANGO) && !defined(PCBMAMBO)
   #define AUX_SERIAL_ROWS 0,
 #else
   #define AUX_SERIAL_ROWS
@@ -318,6 +324,12 @@ void onHardwareAntennaSwitchConfirm(const char * result)
   #define SPORT_POWER_ROWS 0,
 #else
   #define SPORT_POWER_ROWS
+#endif
+
+#if !defined(PCBTANGO) && !defined(PCBMAMBO)
+  #define HARDWARE_DEBUG_ROW             1,
+#else
+  #define HARDWARE_DEBUG_ROW
 #endif
 
 #if defined(EEPROM_RLC)
@@ -359,10 +371,10 @@ void menuRadioHardware(event_t event)
 
     AUX_SERIAL_ROWS
 
-    ADC_FILTER
-    READONLY_ROW /* RAS */,
+    ADC_FILTER_ROW
+    HARDWARE_RAS_ROW
     SPORT_POWER_ROWS
-    1 /* debugs */,
+    HARDWARE_DEBUG_ROW
 
     0,
 
@@ -634,6 +646,7 @@ void menuRadioHardware(event_t event)
         break;
 #endif
 
+#if !defined(PCBTANGO) && !defined(PCBMAMBO)
 #if defined(AUX_SERIAL)
       case ITEM_RADIO_HARDWARE_AUX_SERIAL_MODE:
         g_eeGeneral.auxSerialMode = editChoice(HW_SETTINGS_COLUMN2, y, STR_AUX_SERIAL_MODE, STR_AUX_SERIAL_MODES, g_eeGeneral.auxSerialMode, 0, UART_MODE_MAX, attr, event);
@@ -643,11 +656,9 @@ void menuRadioHardware(event_t event)
         break;
 #endif
 
-#if !defined(PCBTANGO) && !defined(PCBMAMBO)
       case ITEM_RADIO_HARDWARE_JITTER_FILTER:
         g_eeGeneral.jitterFilter = 1 - editCheckBox(1 - g_eeGeneral.jitterFilter, HW_SETTINGS_COLUMN2, y, STR_JITTER_FILTER, attr, event);
         break;
-#endif
 
       case ITEM_RADIO_HARDWARE_RAS:
 #if defined(PCBX9LITE) && !defined(PCBX9LITES)
@@ -686,6 +697,8 @@ void menuRadioHardware(event_t event)
             pushMenu(menuRadioDiagKeys);
         }
         break;
+#endif
+
 #if defined(EEPROM_RLC)
       case ITEM_RADIO_BACKUP_EEPROM:
         if (LCD_W < 212)

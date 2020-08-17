@@ -447,8 +447,11 @@ static uint8_t  USBD_HID_DataIn (void  *pdev,
 static uint8_t  USBD_HID_DataOut (void  *pdev,
                               uint8_t epnum)
 {
-  ReportReceived = 1;
-  DCD_EP_PrepareRx(pdev,HID_AGENT_OUT_EP,HID_Buffer,HID_AGENT_OUT_PACKET);
+  // workaround for preventing change of data in the crsf data parsing process, refer to AgentHandler
+  if(ReportReceived < 2){
+    ReportReceived = 1;
+    DCD_EP_PrepareRx(pdev,HID_AGENT_OUT_EP,HID_Buffer,HID_AGENT_OUT_PACKET);
+  }
   return USBD_OK;
 }
 

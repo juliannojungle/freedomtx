@@ -564,7 +564,7 @@ void menuMainView(event_t event)
 #else
     case EVT_KEY_NEXT_VIEW:
       g_eeGeneral.view = (view_base == 0 ? VIEW_COUNT - 1 : view_base - 1);
-#if defined(PCBTANGO)
+#if defined(PCBTANGO) || defined(PCBMAMBO)
       if (g_eeGeneral.view == VIEW_TIMER2 && !g_model.timers[1].mode) {
         g_eeGeneral.view--;
       }

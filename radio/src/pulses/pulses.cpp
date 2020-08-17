@@ -272,7 +272,7 @@ bool setupPulsesExternalModule(uint8_t protocol)
 #if defined(CROSSFIRE)
     case PROTOCOL_CHANNELS_CROSSFIRE:
 #if defined(PCBTANGO)
-      if (IS_PCBREV_02() && IS_EXTERNAL_MODULE_ENABLED())
+      if (!IS_PCBREV_01() && IS_EXTERNAL_MODULE_ENABLED())
         setupPulsesCrossfire();
 #endif
 #if !defined(PCBTANGO)

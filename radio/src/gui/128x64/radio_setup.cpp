@@ -267,13 +267,13 @@ void menuRadioSetup(event_t event)
         if (attr && s_editMode>0) {
           if (menuHorizontalPosition==0)
 #if defined(PCBTANGO) || defined(PCBMAMBO)
-            CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMin, -60, g_eeGeneral.vBatMax+29); // min=3.0V
+            CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMin, -90+BATTERY_MIN, g_eeGeneral.vBatMax+29); // min=BATTERY_MIN
 #else
             CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMin, -50, g_eeGeneral.vBatMax+29); // min=4.0V
 #endif
           else
 #if defined(PCBTANGO) || defined(PCBMAMBO)
-            CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMax, g_eeGeneral.vBatMin-29, -60); // max=6.0V
+            CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMax, g_eeGeneral.vBatMin-29, -119+BATTERY_MAX); // max=BATTERY_MAX+1
 #else
             CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatMax, g_eeGeneral.vBatMin-29, +40); // max=16.0V
 #endif
@@ -437,7 +437,7 @@ void menuRadioSetup(event_t event)
         lcdDrawTextAlignedLeft(y, STR_BATTERYWARNING);
         putsVolts(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.vBatWarn, attr|LEFT);
 #if defined(PCBTANGO) || defined(PCBMAMBO)
-        if(attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatWarn, 30, 42);  //3-4.2V
+        if(attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatWarn, BATTERY_WARN, BATTERY_MAX);
 #else
         if(attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.vBatWarn, 40, 120); //4-12V
 #endif
@@ -550,27 +550,23 @@ void menuRadioSetup(event_t event)
       case ITEM_RADIO_SETUP_PWR_ON_SPEED:
         lcdDrawTextAlignedLeft(y, STR_PWR_ON_DELAY);
 #if defined(PCBTANGO) || defined(PCBMAMBO)
-        lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.pwrOnSpeed, attr|LEFT);
-        lcdDrawChar(lcdLastRightPos, y, 's');
-        if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.pwrOnSpeed, 0, 3);
+        lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, 1 + g_eeGeneral.pwrOnSpeed, attr|LEFT);
 #else
         lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, 2 - g_eeGeneral.pwrOnSpeed, attr|LEFT);
+#endif
         lcdDrawChar(lcdLastRightPos, y, 's');
         if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.pwrOnSpeed, -1, 2);
-#endif
         break;
 
       case ITEM_RADIO_SETUP_PWR_OFF_SPEED:
         lcdDrawTextAlignedLeft(y, STR_PWR_OFF_DELAY);
 #if defined(PCBTANGO) || defined(PCBMAMBO)
-        lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, g_eeGeneral.pwrOffSpeed, attr|LEFT);
-        lcdDrawChar(lcdLastRightPos, y, 's');
-        if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.pwrOffSpeed, 0, 3);
+        lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, 1 + g_eeGeneral.pwrOffSpeed, attr|LEFT);
 #else
         lcdDrawNumber(RADIO_SETUP_2ND_COLUMN, y, 2 - g_eeGeneral.pwrOffSpeed, attr|LEFT);
+#endif
         lcdDrawChar(lcdLastRightPos, y, 's');
         if (attr) CHECK_INCDEC_GENVAR(event, g_eeGeneral.pwrOffSpeed, -1, 2);
-#endif
         break;
 #endif
       

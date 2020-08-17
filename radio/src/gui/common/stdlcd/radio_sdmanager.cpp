@@ -199,7 +199,7 @@ void onSdManagerMenu(const char * result)
     getSelectionFullPath(lfn);
     pushMenuTextView(lfn);
   }
-#if (defined(PCBTANGO) && !defined DEBUG) || defined(PCBMAMBO)
+#if defined(MULTIMODULE) && (defined(PCBMAMBO) || (defined(PCBTANGO) && !defined(DEBUG))) && !defined(SIMU)
   else if (result == STR_FLASH_EXTERNAL_MULTI) {
     getSelectionFullPath(lfn);
     multiFlashFirmware(EXTERNAL_MODULE, lfn);

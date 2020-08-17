@@ -856,11 +856,6 @@ void checkSDVersion()
     UINT read = 0;
     char version[sizeof(REQUIRED_SDCARD_VERSION)-1];
     char error[sizeof(TR_WRONG_SDCARDVERSION)+ sizeof(version)];
-#if defined(PCBTANGO)
-    char allowed_version[sizeof(REQUIRED_SDCARD_VERSION)-1];
-    strcpy(allowed_version, REQUIRED_SDCARD_VERSION);
-    allowed_version[2] = '1';
-#endif
 
     strAppend(strAppend(error, STR_WRONG_SDCARDVERSION, sizeof(TR_WRONG_SDCARDVERSION)), REQUIRED_SDCARD_VERSION, sizeof(REQUIRED_SDCARD_VERSION));
     FRESULT result = f_open(&versionFile, "/opentx.sdcard.version", FA_OPEN_EXISTING | FA_READ);
@@ -868,12 +863,6 @@ void checkSDVersion()
       if (f_read(&versionFile, &version, sizeof(version), &read) != FR_OK ||
           read != sizeof(version) ||
           strncmp(version, REQUIRED_SDCARD_VERSION, sizeof(version)) != 0) {
-#if defined(PCBTANGO)
-        if(strncmp(version, allowed_version, sizeof(version)) == 0) {
-          f_close(&versionFile); 
-          return;
-        }
-#endif
         TRACE("SD card version mismatch:  %.*s, %s", sizeof(REQUIRED_SDCARD_VERSION)-1, version, REQUIRED_SDCARD_VERSION);
         ALERT(STR_SD_CARD, error, AU_ERROR);
       }
@@ -1831,7 +1820,7 @@ inline uint32_t PWR_PRESS_DURATION_MIN()
     return 200;
 
 #if defined(PCBTANGO) || defined(PCBMAMBO)
-  return g_eeGeneral.pwrOnSpeed * 100;
+  return (1 + g_eeGeneral.pwrOnSpeed) * 100;
 #else
   return (2 - g_eeGeneral.pwrOnSpeed) * 100;
 #endif
@@ -1858,13 +1847,10 @@ void runStartupAnimation()
       isPowerOn = true;
       pwrOn();
       haptic.play(15, 3, PLAY_NOW);
-#if defined(PCBTANGO) || defined(PCBMAMBO)
-      break;
-#endif
     }
   }
 
-  if (duration < PWR_PRESS_DURATION_MIN() || duration >= PWR_PRESS_DURATION_MAX) {
+  if (duration <= PWR_PRESS_DURATION_MIN() || duration >= PWR_PRESS_DURATION_MAX) {
     boardOff();
   }
 }
@@ -2028,7 +2014,7 @@ void opentxInit()
 
 #if (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
   // read the settings (especailly power on delay) from sdcard first then run the startup animation
-  if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE() || bkregGetStatusFlag(STORAGE_ERASE_STATUS) || getBoardOffState()) {
+  if (WAS_RESET_BY_WATCHDOG() || bkregGetStatusFlag(STORAGE_ERASE_STATUS) || getBoardOffState()) {
     if(bkregGetStatusFlag(STORAGE_ERASE_STATUS))
       bkregClrStatusFlag(STORAGE_ERASE_STATUS);
     pwrOn();
@@ -2086,7 +2072,7 @@ void opentxInit()
   }
 
   if (!globalData.unexpectedShutdown) {
-#if defined(PCBTANGO)
+#if (defined(PCBTANGO) || defined(PCBMAMBO)) && !defined(SIMU)
     bool low_voltage = false;
 #if defined(BATT_CRITICAL_SHUTDOWN)
     uint8_t cnt = 0;
@@ -2194,7 +2180,7 @@ int main()
 inline uint32_t PWR_PRESS_SHUTDOWN_DELAY()
 {
 #if defined(PCBTANGO) || defined(PCBMAMBO)
-  return g_eeGeneral.pwrOffSpeed * 100;
+  return (1 + g_eeGeneral.pwrOffSpeed) * 100;
 #else
   return (2 - g_eeGeneral.pwrOffSpeed) * 100;
 #endif

@@ -16,6 +16,7 @@ set(CPU_TYPE STM32F4)
 set(CPU_TYPE_FULL STM32F407xE)  # for size report
 set(LINKER_SCRIPT targets/tbs/stm32f4_flash.ld)
 set(RTC_BACKUP_RAM YES)
+set(PPM_UNIT "PPM display unit" PERCENT_PREC0)
 set(HAPTIC YES)
 set(LUA_EXPORT lua_export_tango)
 if (PCB STREQUAL TANGO)
@@ -124,6 +125,7 @@ set(TARGET_SRC
   ../common/arm/stm32/audio_dac_driver.cpp
   ../common/arm/stm32/adc_driver.cpp
   ../common/arm/stm32/rotary_encoder_driver.cpp
+  malloc.c
   )
 
 set(FIRMWARE_TARGET_SRC

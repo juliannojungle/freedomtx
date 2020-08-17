@@ -240,11 +240,7 @@ void boardInit()
   chargerInit();
   __enable_irq();
 
-#if defined(PCBTANGO)
-  hardwareOptions.pcbrev = (crsfGetHWID() & ~HW_ID_MASK) == 0x02 ? PCBREV_Tango2_V2 : PCBREV_Tango2_V1;
-#elif defined(PCBMAMBO)
-  hardwareOptions.pcbrev = (crsfGetHWID() & ~HW_ID_MASK) == 0x02 ? PCBREV_Mambo_V2 : PCBREV_Mambo_V1;
-#endif
+  hardwareOptions.pcbrev = crsfGetHWID() & ~HW_ID_MASK;
 
 #if defined(RTCLOCK) && !defined(COPROCESSOR)
   rtcInit(); // RTC must be initialized before rambackupRestore() is called
@@ -342,16 +338,15 @@ uint16_t getBatteryVoltage()
   int32_t instant_vbat = anaIn(TX_VOLTAGE); // using filtered ADC value on purpose
   float batt_scale;
 #if defined(PCBTANGO)
-  if (IS_PCBREV_02())
-    batt_scale = BATT_SCALE2;
-  else 
+  if (IS_PCBREV_01())
     batt_scale = BATT_SCALE;
+  else 
+    batt_scale = BATT_SCALE2;
 #elif defined(PCBMAMBO)
   batt_scale = BATT_SCALE;
 #endif
 
   instant_vbat = instant_vbat / batt_scale + g_eeGeneral.txVoltageCalibration;
-  instant_vbat = instant_vbat > BATTERY_MAX * 10 ? BATTERY_MAX * 10 : instant_vbat;
   return (uint16_t)instant_vbat;
 }
 
@@ -416,6 +411,34 @@ void loadDefaultRadioSettings(void)
   g_eeGeneral.lightAutoOff = g_eeGeneral.lightAutoOff < BACKLIGHT_TIMEOUT_MIN ? 6 : g_eeGeneral.lightAutoOff;
   g_eeGeneral.switchConfig = DEFAULT_SWITCH_CONFIG;
   g_eeGeneral.jitterFilter = 0;
+
+  #define MARK_1        0x0000A55A
+  #define MARK_1_MASK   0x0000FFFF
+  #define MARK_2        0xA55A0000
+  #define MARK_2_MASK   0xFFFF0000
+  uint32_t temp_buf = (uint32_t)readBackupReg(BKREG_TEMP_BUFFER_ADDR);
+  if (((temp_buf & MARK_1_MASK) != MARK_1) && (g_eeGeneral.pwrOnSpeed != 0) && (g_eeGeneral.pwrOnSpeed != 0))
+  {
+    g_eeGeneral.pwrOnSpeed = 0;
+    g_eeGeneral.pwrOffSpeed = 0;
+    temp_buf = (temp_buf & ~MARK_1_MASK) | MARK_1;
+    writeBackupReg(BKREG_TEMP_BUFFER_ADDR, temp_buf);
+  }
+
+  if (((temp_buf & MARK_2_MASK) != MARK_2) && ((g_eeGeneral.vBatWarn < BATTERY_WARN) || (g_eeGeneral.vBatMin < -90 + BATTERY_MIN) || (g_eeGeneral.vBatMax > -120 + BATTERY_MAX)))
+  {
+    if (g_eeGeneral.vBatWarn < BATTERY_WARN)
+      g_eeGeneral.vBatWarn = BATTERY_WARN;
+    if (g_eeGeneral.vBatMin < -90 + BATTERY_MIN)
+      g_eeGeneral.vBatMin = -90 + BATTERY_MIN;
+    if (g_eeGeneral.vBatMax > -120 + BATTERY_MAX)
+      g_eeGeneral.vBatMax = -120 + BATTERY_MAX;
+    temp_buf = (temp_buf & ~MARK_2_MASK) | MARK_2;
+    writeBackupReg(BKREG_TEMP_BUFFER_ADDR, temp_buf);
+  }
+  
+  storageDirty(EE_GENERAL);
+  storageCheck(true);
 }
 
 #if defined(DEBUG)

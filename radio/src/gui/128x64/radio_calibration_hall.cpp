@@ -55,7 +55,7 @@ void menuCommonCalib(event_t event)
 #if defined(SIMU)
   reusableBuffer.calib.state = CALIB_FINISHED;
 #else
-  uint8_t gim_select = crossfireSharedData.gim_select;
+  static uint8_t gim_select = GIMBAL_BOTH_SEL;
   int16_t force_point_pos[4];
   int16_t *countdown_timer = &reusableBuffer.calib.midVals[0];
   int16_t *count = &reusableBuffer.calib.midVals[1];

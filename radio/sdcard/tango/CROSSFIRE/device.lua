@@ -200,7 +200,7 @@ local function fieldSignedSave(field, size)
 end
 
 local function fieldIntDisplay(field, y, attr)
-  lcd.drawNumber(79, y, field.value, LEFT + attr)
+  lcd.drawNumber(66, y, field.value, LEFT + attr)
   lcd.drawText(lcd.getLastPos(), y, field.unit, attr)
 end
 
@@ -252,7 +252,7 @@ local function fieldFloatLoad(field, data, offset)
     field.prec = 3
   end
   field.step = fieldGetValue(data, offset+17, 4)
-  field.unit, offset = ""
+  field.unit, offset = fieldGetString(data, offset+21)
 end
 
 local function formatFloat(num, decimals)
@@ -262,7 +262,7 @@ local function formatFloat(num, decimals)
 end
 
 local function fieldFloatDisplay(field, y, attr)
-  lcd.drawText(70, y, formatFloat(field.value, field.prec), LEFT + attr)
+  lcd.drawText(66, y, formatFloat(field.value, field.prec), LEFT + attr)
   lcd.drawText(lcd.getLastPos(), y, field.unit, attr)
 end
 
@@ -281,7 +281,7 @@ local function fieldTextSelectionLoad(field, data, offset)
   field.min = data[offset+1]
   field.max = data[offset+2]
   field.default = data[offset+3]
-  field.unit, offset = ""
+  field.unit, offset = fieldGetString(data, offset+4)
 end
 
 local function fieldTextSelectionSave(field)
@@ -289,7 +289,7 @@ local function fieldTextSelectionSave(field)
 end
 
 local function fieldTextSelectionDisplay(field, y, attr)
-  lcd.drawText(79, y, field.values[field.value+1], attr)
+  lcd.drawText(66, y, field.values[field.value+1], attr)
   lcd.drawText(lcd.getLastPos(), y, field.unit, attr)
 end
 
@@ -312,10 +312,10 @@ end
 
 local function fieldStringDisplay(field, y, attr)
   if edit == true and attr then
-    lcd.drawText(79, y, field.value, FIXEDWIDTH)
-    lcd.drawText(134+6*charIndex, y, string.sub(field.value, charIndex, charIndex), FIXEDWIDTH + attr)
+    lcd.drawText(66, y, field.value, FIXEDWIDTH)
+    lcd.drawText(66+6*charIndex, y, string.sub(field.value, charIndex, charIndex), FIXEDWIDTH + attr)
   else
-    lcd.drawText(79, y, field.value, attr)
+    lcd.drawText(66, y, field.value, attr)
   end
 end
 
@@ -340,7 +340,7 @@ end
 local function fieldCommandDisplay(field, y, attr)
   lcd.drawText(0, y, field.name, attr)
   if field.info ~= "" then
-    lcd.drawText(79, y, "[" .. field.info .. "]")
+    lcd.drawText(66, y, "[" .. field.info .. "]")
   end
 end
 

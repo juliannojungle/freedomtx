@@ -83,6 +83,7 @@ enum {
   PCBREV_Tango2_Unknown = 0,
   PCBREV_Tango2_V1,
   PCBREV_Tango2_V2,
+  PCBREV_Tango2_V3,
 };
 #elif defined(PCBMAMBO)
 enum {
@@ -343,9 +344,9 @@ extern uint16_t adcValues[NUM_ANALOGS];
 // Battery driver
 uint16_t getBatteryVoltage();   // returns current battery voltage in 10mV steps
 // 1 x Li-Ion
-#define BATTERY_WARN                  35 // 3.5V
-#define BATTERY_CRITICAL              32 // 3.2V
-#define BATTERY_MIN                   34 // 3.4V
+#define BATTERY_WARN                  34 // 3.4V
+#define BATTERY_CRITICAL              33 // 3.3V
+#define BATTERY_MIN                   33 // 3.3V
 #define BATTERY_MAX                   42 // 4.2V
 
 #define BATT_CALIB_OFFSET             5
@@ -498,6 +499,7 @@ void extmoduleSendInvertedByte(uint8_t byte);
 #if defined(PCBTANGO)
 #define IS_PCBREV_01()                (hardwareOptions.pcbrev == PCBREV_Tango2_V1)
 #define IS_PCBREV_02()                (hardwareOptions.pcbrev == PCBREV_Tango2_V2)
+#define IS_PCBREV_03()                (hardwareOptions.pcbrev == PCBREV_Tango2_V3)
 #endif
 
 // Charger
@@ -635,5 +637,6 @@ extern AuxSerialRxFifo auxSerialRxFifo;
 void trampolineInit(void);
 void boardReboot2bootloader(uint32_t isNeedFlash, uint32_t HwId, uint32_t sn);
 void loadDefaultRadioSettings(void);
+void onUSBConnectMenu(const char *result);
 
 #endif // _BOARD_H_

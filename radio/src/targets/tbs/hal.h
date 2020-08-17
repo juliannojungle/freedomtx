@@ -534,6 +534,6 @@
   #define INTERRUPT_EXTI_IRQHandler         EXTI15_10_IRQHandler
 
   // S.Port update connector
-  #define SPORT_MAX_BAUDRATE                0
+  #define SPORT_MAX_BAUDRATE                400000
 
 #endif // _HAL_H_
