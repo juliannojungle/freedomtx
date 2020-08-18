@@ -388,7 +388,11 @@ static uint8_t checkDefaultWord(){
   defaultWord.b[3] = (uint8_t)'g';
   uint32_t value = (uint32_t)readBackupReg(BKREG_DEFAULT_WORD);
   if(value != defaultWord.word){
+    writeBackupReg(BKREG_STATUS_FLAG, 0);
+    writeBackupReg(BKREG_TEMP_BUFFER_ADDR, 0);
+    memset((void*)(BKPSRAM_BASE + BKREG_INDEX_COUNT), 0, 4096 - BKREG_INDEX_COUNT);
     writeBackupReg(BKREG_DEFAULT_WORD, defaultWord.word);
+    bkregSetStatusFlag(CHECK_FIRST_BOOT);
     return 0;
   }
   return 1;
