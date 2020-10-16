@@ -658,11 +658,9 @@ void menuMainView(event_t event)
               x = 16 * FW + 6;
               y -= (NUM_SWITCHES / 2) * FH;
             }
-            //TDOD : move switchesReorder definition in board.h
-            static const uint8_t switchesReorder[] = {0, 1, 5, 3, 2, 4};
 
             // re-arrange order according to physical layout
-            i = switchesReorder[i];
+            sw_i = switchReOrder[i];
             getvalue_t val = getValue(MIXSRC_FIRST_SWITCH + sw_i);
             getvalue_t sw = ((val < 0) ? 3 * sw_i + 1 : ((val == 0) ? 3 * sw_i + 2 : 3 * sw_i + 3));
             drawSwitch(x, y, sw, 0);
