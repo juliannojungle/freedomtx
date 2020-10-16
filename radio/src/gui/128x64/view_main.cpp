@@ -650,7 +650,7 @@ void menuMainView(event_t event)
           }
         }
 #elif defined(PCBTANGO)
-        int sw_i;
+        int swIndex;
         for (int i = 0; i < NUM_SWITCHES; ++i) {
           if (SWITCH_EXISTS(i)) {
             uint8_t x = 2 * FW - 2, y = 4 * FH + i * FH + 20;
@@ -660,9 +660,9 @@ void menuMainView(event_t event)
             }
 
             // re-arrange order according to physical layout
-            sw_i = switchReOrder[i];
-            getvalue_t val = getValue(MIXSRC_FIRST_SWITCH + sw_i);
-            getvalue_t sw = ((val < 0) ? 3 * sw_i + 1 : ((val == 0) ? 3 * sw_i + 2 : 3 * sw_i + 3));
+            swIndex = switchReOrder[i];
+            getvalue_t val = getValue(MIXSRC_FIRST_SWITCH + swIndex);
+            getvalue_t sw = ((val < 0) ? 3 * swIndex + 1 : ((val == 0) ? 3 * swIndex + 2 : 3 * swIndex + 3));
             drawSwitch(x, y, sw, 0);
           }
         }
