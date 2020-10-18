@@ -255,7 +255,7 @@ void displayBattVoltage()
   lcdDrawSolidVerticalLine(VBATT_X - 4, VBATT_Y + 10, 3);
   uint8_t count = GET_TXBATT_BARS(20);
 
-  #if defined(HARDWARE_CHARGING_STATE)
+#if defined(HARDWARE_CHARGING_STATE)
   if (IS_CHARGING_STATE()) {
     count = (get_tmr10ms() & 127u) * count / 128;
   }
@@ -408,20 +408,15 @@ void menuMainView(event_t event)
     case EVT_KEY_NEXT_PAGE:
     case EVT_KEY_PREVIOUS_PAGE:
 #if defined(HARDWARE_NO_TRIMS)
-      if (g_trimEditMode == EDIT_TRIM_DISABLED) {
-        if (view_base == VIEW_INPUTS)
-          g_eeGeneral.view ^= ALTERNATE_VIEW;
-        else
-          g_eeGeneral.view = (g_eeGeneral.view + (4 * ALTERNATE_VIEW) + ((event == EVT_KEY_PREVIOUS_PAGE) ? -ALTERNATE_VIEW : ALTERNATE_VIEW)) % (4 * ALTERNATE_VIEW);
+      if (g_trimEditMode != EDIT_TRIM_DISABLED) {
+        break;
       }
-      break;
-#else
+#endif
       if (view_base == VIEW_INPUTS)
         g_eeGeneral.view ^= ALTERNATE_VIEW;
       else
         g_eeGeneral.view = (g_eeGeneral.view + (4 * ALTERNATE_VIEW) + ((event == EVT_KEY_PREVIOUS_PAGE) ? -ALTERNATE_VIEW : ALTERNATE_VIEW)) % (4 * ALTERNATE_VIEW);
       break;
-#endif
 
     case EVT_KEY_CONTEXT_MENU:
       killEvents(event);
