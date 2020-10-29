@@ -87,23 +87,23 @@ uint32_t readTrims()
 #elif defined(PCBMAMBO)
   #if !defined(SIMU) && !defined (BOOT)
   uint16_t trimValue = anaIn(TX_TRIM);
-  if (trimValue > 800) {
-    if (IS_TRIM_PRESSED_STATE(995))
+  if (trimValue < 1024) {
+    if (IS_TRIM_PRESSED_STATE(991))
       result |= 0x01;
-    if (IS_TRIM_PRESSED_STATE(1271))
+    if (IS_TRIM_PRESSED_STATE(719))
       result |= 0x02;
-    if (IS_TRIM_PRESSED_STATE(1414))
+    if (IS_TRIM_PRESSED_STATE(587))
       result |= 0x04;
-    if (IS_TRIM_PRESSED_STATE(1505))
+    if (IS_TRIM_PRESSED_STATE(504))
       result |= 0x08;
 
-    if (IS_TRIM_PRESSED_STATE(1637))
+    if (IS_TRIM_PRESSED_STATE(387))
       result |= 0x10;
-    if (IS_TRIM_PRESSED_STATE(1570))
+    if (IS_TRIM_PRESSED_STATE(445))
       result |= 0x20;
-    if (IS_TRIM_PRESSED_STATE(1720))
+    if (IS_TRIM_PRESSED_STATE(320))
       result |= 0x40;
-    if (IS_TRIM_PRESSED_STATE(1807))
+    if (IS_TRIM_PRESSED_STATE(245))
       result |= 0x80;
   }
   #endif

@@ -95,10 +95,6 @@ elseif(PCB STREQUAL SKY9X OR PCB STREQUAL 9XRPRO OR PCB STREQUAL AR9X)
   include(targets/sky9x/CMakeLists.txt)
 elseif(PCB STREQUAL TANGO OR PCB STREQUAL MAMBO)
   include(targets/tbs/CMakeLists.txt)
-#elseif(PCB STREQUAL TANGO)
-#  include(targets/tango/CMakeLists.txt)
-#elseif(PCB STREQUAL MAMBO)
-#  include(targets/mambo/CMakeLists.txt)
 else()
   message(FATAL_ERROR "Unknown PCB '${PCB}'")
 endif()
@@ -372,10 +368,15 @@ set(SRC
   strhelpers.cpp
   switches.cpp
   mixer.cpp
+  mixer_scheduler.cpp
   stamp.cpp
   timers.cpp
   trainer.cpp
   )
+
+if(PCB STREQUAL SKY9X OR PCB STREQUAL 9XRPRO OR PCB STREQUAL AR9X)
+  list(REMOVE_ITEM SRC mixer_scheduler.cpp)
+endif()
 
 if (PCB STREQUAL TANGO OR PCB STREQUAL MAMBO)
   list(REMOVE_ITEM SRC trainer.cpp)

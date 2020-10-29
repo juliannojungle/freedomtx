@@ -189,7 +189,7 @@ void extmoduleStop()
   disable_main_ppm();
 }
 
-void extmoduleSerialStart(uint32_t baudrate, uint32_t period_half_us, bool inverted)
+void extmoduleSerialStart(uint32_t baudrate, bool inverted)
 {
   if (baudrate == 125000) {
     // TODO init_main_ppm could take the period as parameter?

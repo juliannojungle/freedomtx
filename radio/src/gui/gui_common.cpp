@@ -619,7 +619,7 @@ bool isExternalModuleAvailable(int moduleType)
     return false;
 #endif
 
-#if !defined(XJT)
+#if !defined(XJT) || defined(PCBTANGO) || defined(PCBMAMBO)
   if (moduleType == MODULE_TYPE_XJT_PXX1)
     return false;
 #endif

@@ -520,7 +520,7 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
   disable, set to MAX_SIZE_T. This may lead to a very slight speed
   improvement at the expense of carrying around more memory.
 */
-
+#if !defined(SIMU)
 #include "debug.h"
 
 /* Version identifier to allow people to support multiple versions */
@@ -6059,7 +6059,7 @@ int mspace_mallopt(int param_number, int value) {
   }
 
 */
-
+#endif
 
 /* -----------------------------------------------------------------------
 History:

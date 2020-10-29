@@ -224,8 +224,7 @@
 
   // External Module
   #define EXTMODULE_RCC_AHB1Periph          (RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOE | RCC_AHB1Periph_DMA2)
-  #define EXTMODULE_RCC_APB2Periph          RCC_APB2Periph_TIM8
-  #define HARDWARE_EXTERNAL_MODULE_SIZE_SML
+  #define EXTMODULE_RCC_APB2Periph          (RCC_APB2Periph_TIM8 | RCC_APB2Periph_USART6)
   #define EXTMODULE_PWR_GPIO                GPIOE
   #if defined(PCBTANGO)
     #define EXTMODULE_PWR_GPIO_PIN          GPIO_Pin_5 // PE.05
@@ -361,27 +360,6 @@
   #define TELEMETRY_TIMER                   TIM11
   #define TELEMETRY_TIMER_IRQn              TIM1_TRG_COM_TIM11_IRQn
   #define TELEMETRY_TIMER_IRQHandler        TIM1_TRG_COM_TIM11_IRQHandler
-
-  // Heartbeat
-  #if defined(PCBTANGO)
-    #define HEARTBEAT_RCC_AHB1Periph        0
-    #define HEARTBEAT_RCC_APB2Periph        0
-    #define HEARTBEAT_DMA_Stream            0
-  #elif defined(PCBMAMBO)
-    #define TRAINER_MODULE_HEARTBEAT
-    #define HEARTBEAT_RCC_AHB1Periph        RCC_AHB1Periph_GPIOC
-    #define HEARTBEAT_RCC_APB2Periph        RCC_APB2Periph_USART6
-    #define HEARTBEAT_GPIO                  GPIOC
-    #define HEARTBEAT_GPIO_PIN              GPIO_Pin_7  // PC.07
-    #define HEARTBEAT_GPIO_PinSource        GPIO_PinSource7
-    #define HEARTBEAT_GPIO_AF_SBUS          GPIO_AF_USART6
-    #define HEARTBEAT_GPIO_AF_CAPTURE       GPIO_AF_TIM3
-    #define HEARTBEAT_USART                 USART6
-    #define HEARTBEAT_USART_IRQHandler      USART6_IRQHandler
-    #define HEARTBEAT_USART_IRQn            USART6_IRQn
-    #define HEARTBEAT_DMA_Stream            DMA2_Stream1
-    #define HEARTBEAT_DMA_Channel           DMA_Channel_5
-  #endif
 
   // USB
   #define USB_RCC_AHB1Periph_GPIO           RCC_AHB1Periph_GPIOA
@@ -526,10 +504,21 @@
   #define TIMER_2MHz_RCC_APB1Periph         RCC_APB1Periph_TIM7
   #define TIMER_2MHz_TIMER                  TIM7
 
+  // Mixer scheduler timer
+  #define MIXER_SCHEDULER_TIMER_RCC_APB1Periph RCC_APB1Periph_TIM12
+  #define MIXER_SCHEDULER_TIMER                TIM12
+  #define MIXER_SCHEDULER_TIMER_FREQ           (PERI1_FREQUENCY * TIMER_MULT_APB1)
+  #define MIXER_SCHEDULER_TIMER_IRQn           TIM8_UP_TIM13_IRQn
+  #define MIXER_SCHEDULER_TIMER_IRQHandler     TIM8_UP_TIM13_IRQHandler
+
   // crossfire Interrupt
   #define INTERRUPT_NOT_TIMER               TIM13
   #define INTERRUPT_NOT_TIMER_IRQn          TIM8_UP_TIM13_IRQn  
-  #define INTERRUPT_TIM13_IRQHandler        TIM8_UP_TIM13_IRQHandler
+  #if defined MIXER_SCHEDULER_TIMER_IRQHandler
+    #define INTERRUPT_TIM13_IRQHandler        TIM8_UP_TIM13_IRQHandlerCallback
+  #else
+    #define INTERRUPT_TIM13_IRQHandler        TIM8_UP_TIM13_IRQHandler
+  #endif
   #define INTERRUPT_EXTI_IRQn               EXTI15_10_IRQn
   #define INTERRUPT_EXTI_IRQHandler         EXTI15_10_IRQHandler
 

@@ -24,7 +24,7 @@
 #endif
 
 // TODO find why we need this (for REGISTER at least)
-#if defined(PCBXLITE)
+#if defined(PCBXLITE) || defined(PCBTANGO) || defined(PCBMAMBO)
   #define EVT_BUTTON_PRESSED() EVT_KEY_FIRST(KEY_ENTER)
 #else
   #define EVT_BUTTON_PRESSED() EVT_KEY_BREAK(KEY_ENTER)
@@ -1397,7 +1397,7 @@ void menuModelSetup(event_t event)
               s_editMode = 0;
             }
 #endif
-#if defined(PCBTARANIS)
+#if defined(PCBTARANIS) || defined(PCBTANGO) || defined(PCBMAMBO)
             if (attr && l_posHorz > 0) {
               if (s_editMode > 0) {
                 if (l_posHorz == 1) {
@@ -1697,7 +1697,7 @@ void menuModelSetup(event_t event)
         lcdDrawTextAlignedLeft(y, STR_MODULE_SYNC);
 
         char statusText[64];
-        getMultiSyncStatus(moduleIdx).getRefreshString(statusText);
+        getModuleSyncStatus(moduleIdx).getRefreshString(statusText);
         lcdDrawText(MODEL_SETUP_2ND_COLUMN, y, statusText);
         break;
       }

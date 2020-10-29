@@ -2,9 +2,9 @@ option(DISK_CACHE "Enable SD card disk cache" OFF)
 option(SHUTDOWN_CONFIRMATION "Shutdown confirmation" OFF)
 option(LCD_DUAL_BUFFER "Dual LCD Buffer" OFF)
 
-if (PCB STREQUAL MAMBO)
+if (PCB STREQUAL MAMBO OR PCB STREQUAL TANGO)
 option(PXX1 "PXX1 protocol support" ON)
-option(PXX2 "PXX2 protocol support" ON)
+option(PXX2 "PXX2 protocol support" OFF)
 option(INTERNAL_MODULE_PXX1 "Support for PXX1 internal module" OFF)
 option(INTERNAL_MODULE_PXX2 "Support for PXX2 internal module" OFF)
 endif()
@@ -125,6 +125,7 @@ set(TARGET_SRC
   ../common/arm/stm32/audio_dac_driver.cpp
   ../common/arm/stm32/adc_driver.cpp
   ../common/arm/stm32/rotary_encoder_driver.cpp
+  ../common/arm/stm32/mixer_scheduler_driver.cpp
   malloc.c
   )
 

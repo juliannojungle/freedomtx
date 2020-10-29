@@ -392,6 +392,8 @@ inline void SET_POWER_REASON(uint32_t value)
 extern "C" {
 #endif
 
+void INTERRUPT_TIM13_IRQHandler();
+
 // Power driver
 #define SOFT_PWR_CTRL
 void pwrInit();
@@ -476,7 +478,7 @@ void extmodulePpmStart();
 void extmodulePxxPulsesStart();
 void extmodulePxxSerialStart();
 void extmodulePxx2Start();
-void extmoduleSerialStart(uint32_t baudrate, uint32_t period_half_us, bool inverted);
+void extmoduleSerialStart(uint32_t baudrate, bool inverted);
 void extmoduleInvertedSerialStart(uint32_t baudrate);
 void extmoduleSendBuffer(const uint8_t * data, uint8_t size);
 void extmoduleSendNextFrame();

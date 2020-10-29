@@ -118,8 +118,11 @@ void CRSF_This_Device( uint8_t *p_arr )
             RTOS_DEL_TASK(menusTaskId); // avoid updating the screen
             lcdOn();
             drawDownload();
+            storageDirty(EE_GENERAL|EE_MODEL);
+            storageCheck(true);
+            sdDone();
             volatile uint32_t delay_cnt = get_tmr10ms();
-            while (get_tmr10ms() - delay_cnt <= 100);
+            while (get_tmr10ms() - delay_cnt <= 200);
             boardReboot2bootloader(1, libCrsf_MyHwID, libCrsf_MySerialNo);
 #endif
           }
@@ -178,8 +181,8 @@ void crsfSetModelID(void)
   libUtil_Write8(txBuf, &count, LIBCRSF_CMD_FRAME); /* cmd type */
   libUtil_Write8(txBuf, &count, LIBCRSF_RC_TX);     /* Destination Address */
   libUtil_Write8(txBuf, &count, LIBCRSF_REMOTE_ADD);/* Origin Address */
-  libUtil_Write8(txBuf, &count, 0x10);              /* sub command */
-  libUtil_Write8(txBuf, &count, 0x05);              /* command of set model/receiver id */
+  libUtil_Write8(txBuf, &count, LIBCRSF_RC_RX_CMD); /* sub command */
+  libUtil_Write8(txBuf, &count, LIBCRSF_RC_RX_MODEL_SELECTION_SUBCMD);    /* command of set model/receiver id */
   libUtil_Write8(txBuf, &count, g_model.header.modelId[EXTERNAL_MODULE]); /* model ID */
 
   uint8_t crc2 = libCRC8_Get_CRC_Arr(&txBuf[2], count-2, POLYNOM_2);
@@ -202,8 +205,8 @@ void crsfGetModelID(void)
   libUtil_Write8(txBuf, &count, LIBCRSF_CMD_FRAME); /* cmd type */
   libUtil_Write8(txBuf, &count, LIBCRSF_RC_TX);     /* Destination Address */
   libUtil_Write8(txBuf, &count, LIBCRSF_REMOTE_ADD);/* Origin Address */
-  libUtil_Write8(txBuf, &count, 0x10);              /* sub command */
-  libUtil_Write8(txBuf, &count, 0x06);              /* command of set model/receiver id */
+  libUtil_Write8(txBuf, &count, LIBCRSF_RC_RX_CMD); /* sub command */
+  libUtil_Write8(txBuf, &count, LIBCRSF_RC_RX_CURRENT_MODEL_SELECTION_SUBCMD);  /* command of set model/receiver id */
   libUtil_Write8(txBuf, &count, 0);                 /* the dummy byte of model ID */
 
   uint8_t crc2 = libCRC8_Get_CRC_Arr(&txBuf[2], count-2, POLYNOM_2);
@@ -271,7 +274,7 @@ bool isCrossfirePowerOn()
 
 void crossfirePowerOff(){
   volatile uint32_t off_timeout;
-  if(get_crsf_flag(CRSF_FLAG_POWER_OFF)) {
+  if(isCrossfirePowerOn()) {
     set_crsf_flag(CRSF_FLAG_POWER_OFF);
     off_timeout = get_tmr10ms();
     while (get_crsf_flag(CRSF_FLAG_POWER_OFF)) {

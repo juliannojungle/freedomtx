@@ -139,7 +139,13 @@ void onModelSelectMenu(const char * result)
     loadModel(g_eeGeneral.currModelFilename, true);
     modelslist.setCurrentCategorie(currentCategory);
     modelslist.save();
-    set_model_id_needed = true;
+    if (g_model.moduleData[EXTERNAL_MODULE].type == MODULE_TYPE_NONE) {
+      crossfireTurnOnRf();
+      set_model_id_needed = true;
+    }
+    else {
+      crossfireTurnOffRf(false);
+    }
     storageDirty(EE_GENERAL);
     storageCheck(true);
     chainMenu(menuMainView);

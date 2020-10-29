@@ -173,7 +173,8 @@ void boardInit()
                            ENABLE);
 
     RCC_APB1PeriphClockCmd(LCD_RCC_APB1Periph | AUDIO_RCC_APB1Periph | INTERRUPT_xMS_RCC_APB1Periph | 
-                           TIMER_2MHz_RCC_APB1Periph | LED_RCC_APB1Periph | TELEMETRY_RCC_APB1Periph, 
+                           TIMER_2MHz_RCC_APB1Periph | LED_RCC_APB1Periph | TELEMETRY_RCC_APB1Periph |
+                           MIXER_SCHEDULER_TIMER_RCC_APB1Periph,
                            ENABLE);
 
     RCC_APB2PeriphClockCmd(ADC_RCC_APB2Periph | ROTARY_ENCODER_RCC_APB2Periph, ENABLE);
@@ -185,7 +186,8 @@ void boardInit()
                            EXTMODULE_RCC_AHB1Periph, ENABLE);
 
     RCC_APB1PeriphClockCmd(LCD_RCC_APB1Periph | AUDIO_RCC_APB1Periph | INTERRUPT_xMS_RCC_APB1Periph | 
-                           TIMER_2MHz_RCC_APB1Periph | LED_RCC_APB1Periph | TELEMETRY_RCC_APB1Periph, 
+                           TIMER_2MHz_RCC_APB1Periph | LED_RCC_APB1Periph | TELEMETRY_RCC_APB1Periph |
+                           MIXER_SCHEDULER_TIMER_RCC_APB1Periph, 
                            ENABLE);
 
     RCC_APB2PeriphClockCmd(ADC_RCC_APB2Periph | ROTARY_ENCODER_RCC_APB2Periph | EXTMODULE_RCC_APB2Periph, 
@@ -203,8 +205,7 @@ void boardInit()
                          AUX_SERIAL_RCC_APB1Periph, 
                          ENABLE);
 
-  RCC_APB2PeriphClockCmd(ADC_RCC_APB2Periph | EXTMODULE_RCC_APB2Periph | ROTARY_ENCODER_RCC_APB2Periph |
-                         HEARTBEAT_RCC_APB2Periph, 
+  RCC_APB2PeriphClockCmd(ADC_RCC_APB2Periph | EXTMODULE_RCC_APB2Periph | ROTARY_ENCODER_RCC_APB2Periph,
                          ENABLE);
 #endif
 
@@ -310,6 +311,11 @@ void boardOff()
   // disable interrupts
   __disable_irq();
 
+  volatile uint32_t tmr = get_tmr10ms();
+  while( get_tmr10ms() - tmr <= 100){
+    WDG_RESET();
+  }
+
   while (1) {
     WDG_RESET();
 #if defined(PWR_BUTTON_PRESS)
@@ -388,11 +394,7 @@ static uint8_t checkDefaultWord(){
   defaultWord.b[3] = (uint8_t)'g';
   uint32_t value = (uint32_t)readBackupReg(BKREG_DEFAULT_WORD);
   if(value != defaultWord.word){
-    writeBackupReg(BKREG_STATUS_FLAG, 0);
-    writeBackupReg(BKREG_TEMP_BUFFER_ADDR, 0);
-    memset((void*)(BKPSRAM_BASE + BKREG_INDEX_COUNT), 0, 4096 - BKREG_INDEX_COUNT);
     writeBackupReg(BKREG_DEFAULT_WORD, defaultWord.word);
-    bkregSetStatusFlag(CHECK_FIRST_BOOT);
     return 0;
   }
   return 1;

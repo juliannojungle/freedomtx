@@ -19,6 +19,7 @@
  */
 
 #include "opentx.h"
+#include "mixer_scheduler.h"
 
 RTOS_TASK_HANDLE menusTaskId;
 RTOS_DEFINE_STACK(menusStack, MENUS_STACK_SIZE);
@@ -120,22 +121,11 @@ void sendSynchronousPulses(uint8_t runMask)
   if ((runMask & (1 << EXTERNAL_MODULE)) && isModuleSynchronous(EXTERNAL_MODULE)) {
     if (setupPulsesExternalModule())
 #if defined(PCBTANGO)
-    {
-      if (IS_PCBREV_01() || !IS_EXTERNAL_MODULE_ENABLED()) {
-        return;
-      }
-      extmoduleSendNextFrame();
-    }
+      if (!IS_PCBREV_01() && IS_EXTERNAL_MODULE_ENABLED())
 #elif defined(PCBMAMBO)
-    {
-      if (!IS_EXTERNAL_MODULE_ENABLED()) {
-          return;
-      }
-      extmoduleSendNextFrame();
-    }
-#else
-  extmoduleSendNextFrame();
+      if (IS_EXTERNAL_MODULE_ENABLED())
 #endif
+      extmoduleSendNextFrame();
   }
 }
 
@@ -144,6 +134,9 @@ uint32_t nextMixerTime[NUM_MODULES];
 TASK_FUNCTION(mixerTask)
 {
   s_pulses_paused = true;
+
+  mixerSchedulerInit();
+  mixerSchedulerStart();
 
   while (true) {
 #if defined(PCBTARANIS) && defined(SBUS)
@@ -159,7 +152,16 @@ TASK_FUNCTION(mixerTask)
     bluetooth.wakeup();
 #endif
 
-    RTOS_WAIT_TICKS(1);
+    // run mixer at least every 30ms
+    bool timeout = mixerSchedulerWaitForTrigger(30);
+
+#if defined(DEBUG_MIXER_SCHEDULER)
+    GPIO_SetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+    GPIO_ResetBits(EXTMODULE_TX_GPIO, EXTMODULE_TX_GPIO_PIN);
+#endif
+
+    // re-enable trigger
+    mixerSchedulerEnableTrigger();
 
 #if defined(SIMU)
     if (pwrCheck() == e_power_off) {
@@ -342,8 +344,11 @@ TASK_FUNCTION(systemTask)
         RTOS_DEL_TASK(menusTaskId);
         lcdOn();
         drawDownload();
+        storageDirty(EE_GENERAL|EE_MODEL);
+        storageCheck(true);
+        sdDone();
       }
-      if(RTOS_GET_TIME() - delayCount > 100){
+      if(RTOS_GET_TIME() - delayCount >= 200){
         NVIC_SystemReset();
       }
     }
@@ -352,7 +357,7 @@ TASK_FUNCTION(systemTask)
 #if defined(AGENT)
     AgentHandler();
 #endif
-    if (set_model_id_needed && g_model.header.modelId[EXTERNAL_MODULE] != 0 && get_tmr10ms() - get_modelid_delay > 100 ) {
+    if (set_model_id_needed && get_tmr10ms() - get_modelid_delay > 100 ) {
       crsfSetModelID();
       crsfGetModelID();
       if(current_crsf_model_id == g_model.header.modelId[EXTERNAL_MODULE])

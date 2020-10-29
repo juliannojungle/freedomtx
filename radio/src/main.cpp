@@ -47,12 +47,16 @@ void onUSBConnectMenu(const char *result)
 void handleUsbConnection()
 {
 #if defined(STM32) && !defined(SIMU)
-  bool additional_popup_trigger = false;
 #if defined(AGENT)
-  additional_popup_trigger = getSelectedUsbMode() == USB_AGENT_MODE ? true : false;
+  static bool additional_popup_trigger = true;
 #endif
   if (!usbStarted() && usbPlugged()) {
+#if defined(AGENT)
     if (getSelectedUsbMode() == USB_UNSELECTED_MODE || additional_popup_trigger) {
+      additional_popup_trigger = false;
+#else
+    if (getSelectedUsbMode() == USB_UNSELECTED_MODE) {
+#endif
       if (g_eeGeneral.USBMode == USB_UNSELECTED_MODE && popupMenuItemsCount == 0) {
         POPUP_MENU_ADD_ITEM(STR_USB_JOYSTICK);
 #if defined(AGENT)
