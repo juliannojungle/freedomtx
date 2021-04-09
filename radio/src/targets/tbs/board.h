@@ -113,7 +113,7 @@ DRESULT __disk_write(BYTE drv, const BYTE * buff, DWORD sector, UINT count);
 #else
 #define __disk_read                     disk_read
 #define __disk_write                    disk_write
-#define DISK_OPERATION_TIMEOUT          5
+#define DISK_OPERATION_TIMEOUT          10
 #define SD_MAX_VOLT_TRIAL               ((uint32_t)0x000000FF)
 #endif
 
@@ -268,15 +268,15 @@ enum Analogs {
   STICK3,
   STICK4,
 #if defined(PCBMAMBO)
-  POT1,
-  POT_FIRST = POT1,
+  POT_FIRST,
+  POT1 = POT_FIRST,
   POT2,
   POT_LAST = POT2,
+  SWITCH_TRIM,
   SWITCH_B,
   SWITCH_C,
   SWITCH_D,
   SWITCH_E,
-  TX_TRIM,
 #endif
   TX_VOLTAGE,
   TX_RTC_VOLTAGE,
@@ -297,12 +297,11 @@ enum Analogs {
 #define NUM_TRIMS_KEYS                  8
 #define STICKS_PWM_ENABLED()            false
 #elif defined(PCBMAMBO)
-#define NUM_POTS                        (POT_LAST-POT_FIRST+1)
-#define NUM_XPOTS                       2
+#define NUM_POTS                        2
+#define NUM_XPOTS                       STORAGE_NUM_POTS
 #define NUM_SLIDERS                     0
 #define NUM_TRIMS                       4
 #define NUM_MOUSE_ANALOGS               0
-#define NUM_DUMMY_ANAS                  0
 
 #define STORAGE_NUM_POTS                2
 #define STORAGE_NUM_SLIDERS             0
@@ -315,7 +314,7 @@ enum Analogs {
 #endif
 
 PACK(typedef struct {
-  uint8_t pcbrev:2;
+  uint8_t pcbrev:4;
   uint8_t sticksPwmDisabled:1;
   uint8_t pxx2Enabled:1;
 }) HardwareOptions;
@@ -336,7 +335,11 @@ enum CalibratedAnalogs {
   NUM_CALIBRATED_ANALOGS
 };
 
-#define IS_POT(x)                     (false)
+#if defined(PCBMAMBO)
+  #define IS_POT(x)                   ((x)>=POT_FIRST && (x)<=POT_LAST) 
+#else
+  #define IS_POT(x)                   (false)
+#endif
 #define IS_SLIDER(x)                  (false)
 
 extern uint16_t adcValues[NUM_ANALOGS];
@@ -354,7 +357,7 @@ uint16_t getBatteryVoltage();   // returns current battery voltage in 10mV steps
 #define BATT_SCALE                    (4.446f)
 #define BATT_SCALE2                   (4.162f)
 #elif defined(PCBMAMBO)
-#define BATT_SCALE                    (4.136f)
+#define BATT_SCALE                    (4.55f)
 #endif
 // BATT_SCALE = 12-bit max value * pd / ANALOG_MULTIPLIER / vref / multiplication
 //            = 4095 * 2/3 / 2 / vref / 100
@@ -457,16 +460,11 @@ void telemetryPortSetDirectionOutput();
 void sportSendBuffer(const uint8_t * buffer, uint32_t count);
 bool telemetryGetByte(uint8_t * byte);
 extern uint32_t telemetryErrors;
-void telemetryPortInit(uint32_t baudrate, uint8_t mode);
 void telemetryPortSetDirectionInput();
-void telemetryPortSetDirectionOutput();
 void sportSendByte(uint8_t byte);
 void sportSendByteLoop(uint8_t byte);
 void sportStopSendByteLoop();
-void sportSendBuffer(const uint8_t * buffer, uint32_t count);
-bool telemetryGetByte(uint8_t * byte);
 void telemetryClearFifo();
-extern uint32_t telemetryErrors;
 // soft-serial
 void telemetryPortInvertedInit(uint32_t baudrate);
 
@@ -499,9 +497,9 @@ void extmoduleSendInvertedByte(uint8_t byte);
 
 // PCBREV driver
 #if defined(PCBTANGO)
-#define IS_PCBREV_01()                (hardwareOptions.pcbrev == PCBREV_Tango2_V1)
-#define IS_PCBREV_02()                (hardwareOptions.pcbrev == PCBREV_Tango2_V2)
-#define IS_PCBREV_03()                (hardwareOptions.pcbrev == PCBREV_Tango2_V3)
+  #define IS_PCBREV_01()                (hardwareOptions.pcbrev == PCBREV_Tango2_V1)
+  #define IS_PCBREV_02()                (hardwareOptions.pcbrev == PCBREV_Tango2_V2)
+  #define IS_PCBREV_03()                (hardwareOptions.pcbrev == PCBREV_Tango2_V3)
 #endif
 
 // Charger
@@ -554,51 +552,53 @@ void auxSerialStop();
 // BT driver
 #define IS_BLUETOOTH_CHIP_PRESENT()     (false)
 
-#if defined(PCBTANGO)
 // Led driver
-void ledInit(void);
-void ledOff(void);
-void ledRed(void);
-void ledBlue(void);
-void ledGreen(void);
-void ledWhite(void);
-#if defined(CHARGING_LEDS)
-  #define LED_CHARGING_IN_PROGRESS()    ledRed()
-  #define LED_CHARGING_DONE()           ledGreen()
-#else
-  #define LED_CHARGING_IN_PROGRESS()
-  #define LED_CHARGING_DONE()
+#if defined(PCBTANGO)
+  #define CHARGING_LEDS
+  void ledInit(void);
+  void ledOff(void);
+  void ledRed(void);
+  void ledBlue(void);
+  void ledGreen(void);
+  void ledWhite(void);
+  #if defined(CHARGING_LEDS)
+    #define LED_CHARGING_IN_PROGRESS()    ledRed()
+    #define LED_CHARGING_DONE()           ledGreen()
+  #else
+    #define LED_CHARGING_IN_PROGRESS()
+    #define LED_CHARGING_DONE()
+  #endif
+#elif defined(PCBMAMBO)
+  #define ledOff()
 #endif
 
 // LCD driver
-#define LCD_W                           128
-#define LCD_H                           96
-#define LCD_DEPTH                       4
-#define IS_LCD_RESET_NEEDED()           true
-#define LCD_CONTRAST_MIN                0
-#define LCD_CONTRAST_MAX                45
-#define LCD_CONTRAST_DEFAULT            20
-void lcdInit();
-void lcdOn();
-void lcdOff();
-bool isLcdOn();
-void lcdAdjustContrast(uint8_t val);
+#if defined(PCBTANGO)
+  #define LCD_W                           128
+  #define LCD_H                           96
+  #define LCD_DEPTH                       4
+  #define IS_LCD_RESET_NEEDED()           true
+  #define LCD_CONTRAST_MIN                0
+  #define LCD_CONTRAST_MAX                45
+  #define LCD_CONTRAST_DEFAULT            20
+  void lcdInit();
+  void lcdOn();
+  void lcdOff();
+  bool isLcdOn();
+  void lcdAdjustContrast(uint8_t val);
 #elif defined(PCBMAMBO)
-// Led driver
-#define ledOff()
-
-// LCD driver
-#define LCD_W                           128
-#define LCD_H                           64
-#define LCD_DEPTH                       1
-#define IS_LCD_RESET_NEEDED()           true
-#define LCD_CONTRAST_MIN                0
-#define LCD_CONTRAST_MAX                30
-#define LCD_CONTRAST_DEFAULT            20
-void lcdInit();
-#define lcdOn()
-void lcdInitFinish();
-void lcdOff();
+  #define CHARGING_ANIMATION
+  #define LCD_W                           128
+  #define LCD_H                           64
+  #define LCD_DEPTH                       1
+  #define IS_LCD_RESET_NEEDED()           true
+  #define LCD_CONTRAST_MIN                0
+  #define LCD_CONTRAST_MAX                255
+  #define LCD_CONTRAST_DEFAULT            159
+  void lcdInit();
+  #define lcdOn()
+  void lcdInitFinish();
+  void lcdOff();
 #endif
 // TODO lcdRefreshWait() stub in simpgmspace and remove LCD_DUAL_BUFFER
 #if defined(LCD_DMA) && !defined(LCD_DUAL_BUFFER) && !defined(SIMU)
@@ -611,7 +611,7 @@ void lcdRefresh();
 #else
 void lcdRefresh(bool wait=true); // TODO uint8_t wait to simplify this
 #endif
-void lcdSetRefVolt(unsigned char val);
+void lcdSetRefVolt(uint8_t val);
 void lcdSetContrast();
 
 // Wifi driver

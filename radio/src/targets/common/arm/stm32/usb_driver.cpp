@@ -100,6 +100,9 @@ void usbStart()
       // initialize USB as HID device
       USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_AGENT_cb, &USR_cb);
       break;
+    case USB_CHARGING_MODE:
+      // don't initialize USB in charging mode
+      break;
 #endif
 #if defined(USB_SERIAL)
     case USB_SERIAL_MODE:
@@ -118,6 +121,10 @@ void usbStart()
 
 void usbStop()
 {
+#if defined(AGENT)
+  // facilitate switching usb mode in runtime
+  USB_OTG_WRITE_REG32(&USB_OTG_dev.regs.GREGS->GCCFG, 0);
+#endif
   usbDriverStarted = false;
   USBD_DeInit(&USB_OTG_dev);
 }
