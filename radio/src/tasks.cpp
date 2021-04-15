@@ -180,7 +180,7 @@ TASK_FUNCTION(mixerTask)
       case MODULE_TYPE_CROSSFIRE: // unlbock by crsfshot
       case MODULE_TYPE_NONE:
       default:
-        timeout = mixerSchedulerWaitForTrigger(4);
+        timeout = mixerSchedulerWaitForTrigger(30);
         break;
     }
 #else
@@ -208,6 +208,13 @@ TASK_FUNCTION(mixerTask)
 
     uint32_t now = RTOS_GET_MS();
     uint8_t runMask = 0;
+
+#if defined(CROSSFIRE_TASK) && !defined(SIMU)
+    if (g_model.moduleData[EXTERNAL_MODULE].type == MODULE_TYPE_CROSSFIRE && isMixerTaskScheduled()) {
+      clearMixerTaskSchedule();
+      runMask |= (1 << 1);
+    }
+#endif
 
     if (now >= nextMixerTime[0]) {
       runMask |= (1 << 0);
