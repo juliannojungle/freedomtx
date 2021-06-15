@@ -18,10 +18,11 @@
  * GNU General Public License for more details.
  */
 
-#include "opentx.h"
+// #include "opentx.h"
 #include "raylib-cpp.hpp"
 
-void boardInit()
+// void boardInit()
+int main(void)
 {
   int screenWidth = 480;
   int screenHeight = 272;
@@ -34,8 +35,9 @@ void boardInit()
     BeginDrawing();
     {
       window.ClearBackground(RAYWHITE);
-      textColor.DrawText("Congrats! You created your first window!", 190, 200, 20);
+      textColor.DrawText("FreedomTX - Raspberry Pi port", 190, 200, 20);
     }
     EndDrawing();
   }
+  return 0;
 }
